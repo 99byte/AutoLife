@@ -6,7 +6,7 @@ TTS (文本转语音) 模块
 - 其他 TTS 服务
 """
 
-from autolife.voice_agent.tts.base import TTSBase
+from autolife.voice_agent.tts.base import TTSBase, TTSConfig
 from autolife.voice_agent.tts.zhipu import ZhipuTTS
 
-__all__ = ["TTSBase", "ZhipuTTS"]
+__all__ = ["TTSBase", "TTSConfig", "ZhipuTTS"]

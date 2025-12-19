@@ -10,7 +10,8 @@ AutoLife/
 ├── pyproject.toml                     # 项目配置和依赖管理
 ├── .gitignore                        # Git忽略文件配置
 ├── .python-version                   # Python版本指定
-├── main.py                           # uv生成的入口文件
+├── .env                              # 环境变量配置（Git忽略）
+├── .env.example                      # 环境变量模板
 │
 ├── Open-AutoGLM/                     # AutoGLM子模块 (git submodule)
 │   ├── README.md
@@ -25,38 +26,48 @@ AutoLife/
 │       ├── hdc/                      # HarmonyOS HDC控制
 │       └── config/                   # 配置和提示词
 │
-└── autolife/                         # AutoLife主项目
-    ├── __init__.py                   # 包初始化
-    ├── cli.py                        # 命令行接口
-    │
-    ├── voice_agent/                  # 语音代理模块
-    │   ├── __init__.py
-    │   ├── agent.py                  # VoiceAgent主类 (整合语音+AutoGLM)
-    │   │
-    │   ├── asr/                      # ASR语音识别模块
-    │   │   ├── __init__.py
-    │   │   ├── base.py               # ASR基类
-    │   │   └── zhipu.py              # 智谱AI ASR实现
-    │   │
-    │   ├── tts/                      # TTS语音合成模块
-    │   │   ├── __init__.py
-    │   │   ├── base.py               # TTS基类
-    │   │   └── zhipu.py              # 智谱AI TTS实现
-    │   │
-    │   └── wakeword/                 # 唤醒词检测模块
-    │       ├── __init__.py
-    │       └── detector.py           # 唤醒词检测器
-    │
-    ├── examples/                     # 示例代码
-    │   ├── __init__.py
-    │   └── basic_usage.py            # 基础使用示例
-    │
-    ├── docs/                         # 中文文档
-    │   ├── quickstart.md             # 快速开始指南
-    │   └── ROADMAP.md                # 开发路线图
-    │
-    └── demos/                        # 演示素材目录
-        └── (待添加视频和录音)
+├── src/                              # 源代码目录（标准 src layout）
+│   └── autolife/                     # AutoLife主项目
+│       ├── __init__.py               # 包初始化
+│       ├── cli.py                    # 命令行接口
+│       │
+│       └── voice_agent/              # 语音代理模块
+│           ├── __init__.py
+│           ├── agent.py              # VoiceAgent主类 (整合语音+AutoGLM)
+│           │
+│           ├── asr/                  # ASR语音识别模块
+│           │   ├── __init__.py
+│           │   ├── base.py           # ASR基类
+│           │   └── zhipu.py          # 智谱AI ASR实现 ✅
+│           │
+│           ├── tts/                  # TTS语音合成模块
+│           │   ├── __init__.py
+│           │   ├── base.py           # TTS基类
+│           │   └── zhipu.py          # 智谱AI TTS实现 ✅
+│           │
+│           └── wakeword/             # 唤醒词检测模块
+│               ├── __init__.py
+│               └── detector.py       # 唤醒词检测器
+│
+├── docs/                             # 中文文档
+│   ├── quickstart.md                 # 快速开始指南
+│   ├── ROADMAP.md                    # 开发路线图
+│   └── stage1-completion-report.md   # 阶段 1 完成报告 ✅
+│
+├── examples/                         # 示例代码
+│   ├── __init__.py
+│   └── basic_usage.py                # 基础使用示例
+│
+├── demos/                            # 演示素材目录
+│   └── (待添加视频和录音)
+│
+├── scripts/                          # 辅助脚本
+│   └── verify_setup.sh               # 项目构建验证脚本
+│
+└── tests/                            # 测试文件（根目录）✅
+    ├── test_tts.py                   # TTS 功能测试 ✅
+    ├── test_asr.py                   # ASR 功能测试 ✅
+    └── test_e2e.py                   # 端到端集成测试 ✅
 ```
 
 ## 核心模块说明
@@ -153,11 +164,9 @@ PhoneAgent.run()
 ### 核心依赖
 - `openai >= 2.9.0`: OpenAI API客户端 (AutoGLM使用)
 - `pillow >= 12.0.0`: 图像处理
-
-### 可选依赖
-- `sounddevice`: 音频录制/播放
-- `soundfile`: 音频文件读写
-- `numpy`: 音频数据处理
+- `requests >= 2.31.0`: HTTP 请求（ASR/TTS API 调用）✅
+- `sounddevice >= 0.4.6`: 音频播放和录制 ✅
+- `soundfile >= 0.12.1`: 音频文件处理 ✅
 - `openai-whisper`: 本地ASR模型
 - `pvporcupine`: 唤醒词检测
 
@@ -219,10 +228,12 @@ PHONE_AGENT_DEVICE_ID    # ADB设备ID
 
 ## 文件统计
 
-- Python文件: ~20个
+- Python文件: ~23个（+3 测试文件）✅
 - 核心代码: ~1500行
-- 文档: ~2000行
+- 测试代码: ~400行 ✅
+- 文档: ~2500行（+阶段 1 报告）✅
 - 示例: 5+个场景
+- 测试覆盖: 13/13 测试通过 ✅
 
 ## 下一步开发
 
@@ -231,4 +242,4 @@ PHONE_AGENT_DEVICE_ID    # ADB设备ID
 ---
 
 **维护者**: AutoLife Team
-**最后更新**: 2024-12-19
+**最后更新**: 2024-12-19 23:15 ✅ 阶段 1 完成
