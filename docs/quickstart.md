@@ -21,34 +21,86 @@ cd autolife
 git submodule update --init --recursive
 ```
 
-### 2. 安装依赖
+### 2. 安装 uv 包管理器
 
-使用 uv 包管理器安装:
+uv 是一个快速的 Python 包管理器和虚拟环境管理工具：
 
 ```bash
-# 安装 uv (如果未安装)
+# macOS/Linux
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# 安装项目依赖
-uv sync
+# macOS (使用 Homebrew)
+brew install uv
+
+# Windows (PowerShell 管理员模式)
+irm https://astral.sh/uv/install.ps1 | iex
 ```
 
-### 3. 配置环境变量
+安装后重启终端或执行 `source ~/.bashrc`（Linux）/ `source ~/.zshrc`（macOS）。
 
-创建 `.env` 文件或直接设置环境变量:
+### 3. 创建虚拟环境
 
 ```bash
-# 智谱 AI API 密钥
-export ZHIPUAI_API_KEY="your-api-key-here"
+# 在项目根目录创建虚拟环境
+uv venv
 
-# AutoGLM 模型服务地址
-export AUTOGLM_BASE_URL="http://localhost:8000/v1"
-
-# 模型名称
-export AUTOGLM_MODEL="autoglm-phone-9b"
+# 虚拟环境会创建在 .venv 目录下
 ```
 
-### 4. 配置手机设备
+### 4. 激活虚拟环境
+
+```bash
+# macOS/Linux
+source .venv/bin/activate
+
+# Windows (CMD)
+.venv\Scripts\activate.bat
+
+# Windows (PowerShell)
+.venv\Scripts\Activate.ps1
+```
+
+激活后，终端提示符前会显示 `(.venv)`。
+
+### 5. 安装依赖
+
+```bash
+# 安装所有依赖
+uv sync
+
+# 可选：安装开发依赖
+uv sync --extra dev
+
+# 可选：安装 Whisper 支持（本地语音识别）
+uv sync --extra whisper
+```
+
+### 6. 配置环境变量
+
+```bash
+# 复制环境变量模板
+cp .env.example .env
+
+# 使用你喜欢的编辑器打开 .env
+nano .env
+# 或
+vim .env
+# 或
+code .env  # VS Code
+```
+
+**必需配置：**
+```bash
+ZHIPUAI_API_KEY=your_zhipuai_api_key_here
+```
+
+**获取 API 密钥：**
+1. 访问 [智谱 AI 开放平台](https://open.bigmodel.cn/)
+2. 注册并登录
+3. 点击右上角头像 → API 密钥 → 创建密钥
+4. 复制密钥并粘贴到 `.env` 文件
+
+### 7. 配置手机设备
 
 #### Android 设备
 
@@ -95,6 +147,47 @@ export AUTOGLM_MODEL="autoglm-phone-9b"
 #### 选项 B: 本地部署
 
 参考 [Open-AutoGLM 文档](../Open-AutoGLM/README.md) 部署本地模型服务。
+
+### 6. 开发模式安装（推荐开发者）
+
+如果你计划参与开发或修改代码，强烈建议以**可编辑模式**安装项目：
+
+```bash
+# 确保虚拟环境已激活
+source .venv/bin/activate  # macOS/Linux
+# 或 .venv\Scripts\activate  # Windows
+
+# 使用 uv 以可编辑模式安装
+uv pip install -e .
+
+# 或使用 pip
+pip install -e .
+```
+
+**为什么需要开发模式？**
+
+1. **代码修改即时生效** - 修改 Python 代码后无需重新安装
+2. **正确的导入路径** - 项目使用 `autolife` 作为包名（而非 `src`）
+3. **IDE 支持更好** - 代码补全、跳转定义等功能完美工作
+
+**导入规范**：
+
+项目采用标准的 `src layout` 结构，所有代码导入必须使用 `autolife` 包名：
+
+```python
+# ✅ 正确的导入方式
+from autolife.voice_agent.agent import VoiceAgent
+from autolife.voice_agent.asr import ZhipuASR, ASRBase
+from autolife.voice_agent.tts import ZhipuTTS, TTSBase
+
+# ❌ 错误的导入方式（不要使用）
+from src.voice_agent.agent import VoiceAgent
+```
+
+**目录结构**：
+- 源代码位于 `src/autolife/` 目录
+- 开发模式安装后，`autolife` 包可从任何位置导入
+- 修改 `src/autolife/` 下的代码会立即反映在运行时
 
 ## 第一次运行
 

@@ -6,7 +6,7 @@ import argparse
 import os
 import sys
 
-from autolife import VoiceAgent
+from autolife.voice_agent.agent import VoiceAgent
 from phone_agent.agent import AgentConfig
 from phone_agent.model import ModelConfig
 
@@ -81,7 +81,7 @@ def main():
 
     # 配置模型
     model_config = ModelConfig(
-        base_url=args.base_url, model=args.model, api_key=args.api_key
+        base_url=args.base_url, model_name=args.model, api_key=args.api_key
     )
 
     # 配置代理

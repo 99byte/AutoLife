@@ -80,52 +80,97 @@ AutoLife 是基于 [Open-AutoGLM](https://github.com/zai-org/Open-AutoGLM) 开�
 
 ### 安装步骤
 
-1. **克隆项目**
+#### 1. 克隆项目
 
 ```bash
-git clone https://github.com/yourusername/autolife.git
+git clone https://github.com/99byte/autolife.git
 cd autolife
 git submodule update --init --recursive
 ```
 
-2. **安装依赖 (使用 uv)**
+#### 2. 安装 uv 包管理器
 
 ```bash
-# 安装 uv (如果未安装)
+# macOS/Linux
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# 安装项目依赖
+# 或使用 Homebrew (macOS)
+brew install uv
+
+# Windows (PowerShell)
+irm https://astral.sh/uv/install.ps1 | iex
+```
+
+#### 3. 创建虚拟环境并安装依赖
+
+```bash
+# 创建虚拟环境
+uv venv
+
+# 激活虚拟环境
+# macOS/Linux
+source .venv/bin/activate
+# Windows
+.venv\Scripts\activate
+
+# 安装依赖
 uv sync
-
-# 可选: 安装开发依赖
-uv sync --extra dev
-
-# 可选: 安装 Whisper 支持
-uv sync --extra whisper
 ```
 
-3. **配置设备**
-
-参考 [Open-AutoGLM 文档](./Open-AutoGLM/README.md) 配置 ADB/HDC 和手机设备。
-
-4. **配置 API 密钥**
+#### 4. 配置环境变量
 
 ```bash
-# 设置智谱 AI API 密钥
-export ZHIPUAI_API_KEY="your-api-key-here"
+# 复制环境变量模板
+cp .env.example .env
 
-# 设置 AutoGLM 模型服务地址
-export AUTOGLM_BASE_URL="http://localhost:8000/v1"
+# 编辑 .env 文件，填写你的配置
+# 必需配置：ZHIPUAI_API_KEY
 ```
 
-5. **运行测试**
+**获取智谱 AI API 密钥：**
+1. 访问 [智谱 AI 开放平台](https://open.bigmodel.cn/)
+2. 注册并登录账号
+3. 进入"API 密钥"页面创建密钥
+4. 复制密钥到 `.env` 文件的 `ZHIPUAI_API_KEY` 变量
+
+#### 5. 配置手机设备
+
+参考 [设备配置指南](./docs/quickstart.md#4-配置手机设备)
+
+#### 6. 验证安装
 
 ```bash
-# 文本模式测试
-uv run autolife --text "打开微信"
-
-# 查看帮助
+# 显示帮助信息
 uv run autolife --help
+
+# 测试文本模式（不需要手机连接）
+uv run autolife --text "你好" --verbose
+```
+
+如果看到 CLI 正常输出，说明安装成功！
+
+#### 7. 开发模式安装（推荐开发者）
+
+如果你要参与开发或修改代码，建议以**可编辑模式**安装项目：
+
+```bash
+# 使用 uv（推荐）
+uv pip install -e .
+
+# 或使用 pip
+pip install -e .
+```
+
+**开发模式的优势**：
+- ✅ 代码修改后立即生效，无需重新安装
+- ✅ 导入路径与生产环境一致（使用 `from autolife ...`）
+- ✅ IDE 能正确识别和补全导入
+- ✅ 便于调试和测试
+
+**注意**：项目使用标准的 `src layout` 结构，所有导入应使用 `autolife` 作为包名：
+```python
+from autolife.voice_agent.agent import VoiceAgent  # ✅ 正确
+from src.voice_agent.agent import VoiceAgent       # ❌ 错误
 ```
 
 ---

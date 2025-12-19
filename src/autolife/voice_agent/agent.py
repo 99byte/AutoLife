@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Callable
 
 # 添加 Open-AutoGLM 到 Python 路径
-AUTOGLM_PATH = Path(__file__).parent.parent.parent / "Open-AutoGLM"
+AUTOGLM_PATH = Path(__file__).parent.parent.parent.parent / "Open-AutoGLM"
 sys.path.insert(0, str(AUTOGLM_PATH))
 
 from phone_agent import PhoneAgent
