@@ -1,0 +1,78 @@
+[project]
+name = "autolife"
+version = "0.1.0"
+description = "基于 AutoGLM 的语音智能助手 - AutoGLM Voice Assistant with ASR & TTS"
+readme = "README.md"
+authors = [
+    { name = "AutoLife Team", email = "autolife@example.com" }
+]
+license = { text = "Apache-2.0" }
+requires-python = ">=3.10"
+keywords = ["voice-assistant", "autoglm", "asr", "tts", "phone-automation"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    # AutoGLM 核心依赖
+    "openai>=2.9.0",
+    "pillow>=12.0.0",
+    # "pure-python-adb",  # 暂时注释,需要时手动安装
+    # "opencv-python",
+
+    # 语音相关
+    # "zhipuai",  # 智谱 AI SDK (待正式发布)
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+]
+
+whisper = [
+    "openai-whisper>=20230918",
+    "torch>=2.0.0",
+]
+
+porcupine = [
+    "pvporcupine>=2.0.0",  # 唤醒词检测
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/autolife"
+Documentation = "https://github.com/yourusername/autolife/blob/main/docs"
+Repository = "https://github.com/yourusername/autolife"
+Issues = "https://github.com/yourusername/autolife/issues"
+
+[project.scripts]
+autolife = "src.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
