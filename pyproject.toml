@@ -24,12 +24,12 @@ dependencies = [
     "pillow>=12.0.0",
     # "pure-python-adb",  # 暂时注释,需要时手动安装
     # "opencv-python",
-
     # 语音相关
     # "zhipuai",  # 智谱 AI SDK (待正式发布)
-    "requests>=2.31.0",      # HTTP 请求（ASR/TTS API 调用）
-    "sounddevice>=0.4.6",    # 音频播放和录制
-    "soundfile>=0.12.1",     # 音频文件处理
+    "python-dotenv>=1.2.1",
+    "requests>=2.31.0", # HTTP 请求（ASR/TTS API 调用）
+    "sounddevice>=0.4.6", # 音频播放和录制
+    "soundfile>=0.12.1", # 音频文件处理
 ]
 
 [project.optional-dependencies]

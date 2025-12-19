@@ -5,6 +5,10 @@ AutoLife 命令行接口
 import argparse
 import os
 import sys
+from pathlib import Path
+
+# 自动加载 .env 文件
+from dotenv import load_dotenv
 
 from autolife.voice_agent.agent import VoiceAgent
 from phone_agent.agent import AgentConfig
@@ -13,6 +17,21 @@ from phone_agent.model import ModelConfig
 
 def main():
     """CLI 主入口"""
+    # 加载 .env 文件（从当前目录或项目根目录）
+    env_path = Path.cwd() / ".env"
+    if env_path.exists():
+        load_dotenv(env_path)
+        print(f"[配置] 已加载环境变量: {env_path}")
+    else:
+        # 尝试从项目根目录加载
+        project_root = Path(__file__).parent.parent.parent.parent
+        env_path = project_root / ".env"
+        if env_path.exists():
+            load_dotenv(env_path)
+            print(f"[配置] 已加载环境变量: {env_path}")
+        else:
+            print("[提示] 未找到 .env 文件，将使用命令行参数或系统环境变量")
+
     parser = argparse.ArgumentParser(
         description="AutoLife - 基于 AutoGLM 的语音智能助手",
         formatter_class=argparse.RawDescriptionHelpFormatter,

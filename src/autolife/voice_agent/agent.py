@@ -85,7 +85,7 @@ class VoiceAgent:
         # 初始化语音模块
         self.asr = asr_client or ZhipuASR()
         self.tts = tts_client or ZhipuTTS()
-        self.wake_word = wake_word_detector or WakeWordDetector()
+        self.wake_word = wake_word_detector or WakeWordDetector(asr_client=self.asr)
 
         self.enable_voice_feedback = enable_voice_feedback
 
@@ -146,25 +146,61 @@ class VoiceAgent:
 
         持续监听语音输入,检测唤醒词后执行任务
         """
+        from autolife.voice_agent.audio import AudioRecorder
+        import tempfile
+
         self.is_active = True
         self.wake_word.start()
+        recorder = AudioRecorder()
 
         print("\n🎤 语音助手已启动,说出唤醒词开始使用...")
         print(f"   唤醒词: {', '.join(self.wake_word.wake_words)}")
         print("   按 Ctrl+C 退出\n")
 
-        # TODO: 实现实际的音频流监听
-        # while self.is_active:
-        #     # 录制音频
-        #     audio_chunk = record_audio()
-        #
-        #     # 检测唤醒词
-        #     if self.wake_word.detect_from_audio(audio_chunk):
-        #         # 继续录制完整指令
-        #         audio_command = record_command()
-        #
-        #         # 识别并执行
-        #         self.run_from_voice(audio_command)
+        try:
+            while self.is_active:
+                # 1. 录制一小段音频用于唤醒词检测（3 秒）
+                print("[监听中] 等待唤醒词...")
+                wake_audio = recorder.record_for_duration(3.0)
+
+                # 保存为临时文件
+                with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+                    temp_path = Path(f.name)
+                    recorder.save_to_file(wake_audio, temp_path)
+
+                # 2. 使用 ASR 转文本，然后检测唤醒词
+                try:
+                    detected = self.wake_word.detect_from_audio(temp_path, self.asr)
+
+                    if detected:
+                        print(f"\n✓ 检测到唤醒词！")
+                        if self.enable_voice_feedback:
+                            self.tts.speak("我在，请说")
+
+                        # 3. 继续录制完整指令（5 秒）
+                        print("[录音中] 请说出你的指令...")
+                        command_audio = recorder.record_for_duration(5.0)
+
+                        # 保存指令音频
+                        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+                            command_path = Path(f.name)
+                            recorder.save_to_file(command_audio, command_path)
+
+                        # 4. 识别并执行指令
+                        self.run_from_voice(command_path)
+
+                        # 清理临时文件
+                        command_path.unlink(missing_ok=True)
+
+                except Exception as e:
+                    print(f"[错误] 处理音频时出错: {e}")
+                finally:
+                    # 清理临时文件
+                    temp_path.unlink(missing_ok=True)
+
+        except KeyboardInterrupt:
+            print("\n\n正在退出...")
+            self.stop_listening()
 
     def stop_listening(self) -> None:
         """停止语音监听"""

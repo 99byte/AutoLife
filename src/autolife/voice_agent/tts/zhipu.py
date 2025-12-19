@@ -8,6 +8,13 @@ import os
 import requests
 from pathlib import Path
 
+# 自动加载 .env 文件
+try:
+    from dotenv import load_dotenv
+    load_dotenv()  # 尝试加载 .env 文件
+except ImportError:
+    pass  # 如果没有安装 python-dotenv，忽略
+
 from autolife.voice_agent.tts.base import TTSBase, TTSConfig
 
 
