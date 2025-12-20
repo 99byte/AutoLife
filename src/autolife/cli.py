@@ -40,8 +40,11 @@ def main():
   # 文本模式运行单次任务
   autolife --text "打开微信"
 
-  # 启动语音监听模式
-  autolife --listen
+  # 单次语音交互（录音 5 秒）
+  autolife --listen single
+
+  # 持续对话模式（自动检测语音停顿）
+  autolife --listen continuous
 
   # 指定 API 配置
   autolife --api-key YOUR_KEY --base-url https://api.example.com/v1
@@ -70,7 +73,10 @@ def main():
     # 运行模式
     parser.add_argument("--text", "-t", help="文本模式: 直接执行指定任务")
     parser.add_argument(
-        "--listen", "-l", action="store_true", help="语音监听模式: 持续监听语音指令"
+        "--listen",
+        "-l",
+        choices=["single", "continuous"],
+        help="语音交互模式: single=单次交互(5秒), continuous=持续对话(自动分段)",
     )
     parser.add_argument("--audio", "-a", help="音频文件模式: 从音频文件识别并执行任务")
 
@@ -82,9 +88,6 @@ def main():
     # 语音配置
     parser.add_argument(
         "--no-voice-feedback", action="store_true", help="禁用语音反馈,仅文本输出"
-    )
-    parser.add_argument(
-        "--wake-words", nargs="+", default=["小智", "AutoLife"], help="自定义唤醒词列表"
     )
 
     # 其他选项
@@ -131,13 +134,19 @@ def main():
             print(f"\n✅ 任务完成: {result}")
 
         elif args.listen:
-            # 语音监听模式
-            agent.wake_word.wake_words = args.wake_words
-            try:
-                agent.start_listening()
-            except KeyboardInterrupt:
-                print("\n\n正在退出...")
-                agent.stop_listening()
+            # 语音交互模式
+            if args.listen == "single":
+                # 单次交互
+                print("\n[单次交互模式] 点击按钮开始录音...")
+                result = agent.run_single_interaction()
+                print(f"\n✅ 任务完成: {result}")
+            else:
+                # 持续对话
+                try:
+                    agent.run_continuous_interaction()
+                except KeyboardInterrupt:
+                    print("\n\n正在退出...")
+                    agent.stop_listening()
 
     except Exception as e:
         print(f"\n❌ 错误: {e}", file=sys.stderr)

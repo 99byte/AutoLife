@@ -16,7 +16,6 @@ from phone_agent.model import ModelConfig
 
 from autolife.voice_agent.asr import ASRBase, ZhipuASR
 from autolife.voice_agent.tts import TTSBase, ZhipuTTS
-from autolife.voice_agent.wakeword import WakeWordDetector
 
 
 class VoiceAgent:
@@ -29,7 +28,9 @@ class VoiceAgent:
     特性:
     - 语音输入 (ASR)
     - 语音输出 (TTS)
-    - 唤醒词检测
+    - 单次交互模式（按钮触发）
+    - 持续对话模式（自动分段）
+    - VAD 语音活动检测
     - 多模态理解 (语音 + 屏幕视觉)
     - 连续对话能力
 
@@ -39,8 +40,11 @@ class VoiceAgent:
         >>> # 创建语音助手
         >>> agent = VoiceAgent()
         >>>
-        >>> # 语音控制手机
-        >>> agent.run_from_voice("打开微信")
+        >>> # 单次交互模式
+        >>> agent.run_single_interaction()
+        >>>
+        >>> # 持续对话模式
+        >>> agent.run_continuous_interaction()
         >>>
         >>> # 或从文本输入
         >>> agent.run_from_text("帮我搜索附近的餐厅")
@@ -54,7 +58,6 @@ class VoiceAgent:
         # 语音模块配置
         asr_client: ASRBase | None = None,
         tts_client: TTSBase | None = None,
-        wake_word_detector: WakeWordDetector | None = None,
         # 回调函数
         confirmation_callback: Callable[[str], bool] | None = None,
         takeover_callback: Callable[[str], None] | None = None,
@@ -69,7 +72,6 @@ class VoiceAgent:
             agent_config: AutoGLM 代理配置
             asr_client: ASR 客户端,默认使用 ZhipuASR
             tts_client: TTS 客户端,默认使用 ZhipuTTS
-            wake_word_detector: 唤醒词检测器
             confirmation_callback: 敏感操作确认回调
             takeover_callback: 人工接管回调
             enable_voice_feedback: 是否启用语音反馈
@@ -85,7 +87,6 @@ class VoiceAgent:
         # 初始化语音模块
         self.asr = asr_client or ZhipuASR()
         self.tts = tts_client or ZhipuTTS()
-        self.wake_word = wake_word_detector or WakeWordDetector(asr_client=self.asr)
 
         self.enable_voice_feedback = enable_voice_feedback
 
@@ -140,72 +141,147 @@ class VoiceAgent:
         # 执行任务
         return self.run_from_text(task, speak_result=True)
 
-    def start_listening(self) -> None:
+    def run_single_interaction(self, duration: float = 5.0) -> str:
         """
-        启动语音监听模式
+        单次语音交互
 
-        持续监听语音输入,检测唤醒词后执行任务
+        前端点击按钮 → 录音 duration 秒 → ASR 识别 → 执行任务 → TTS 反馈
+
+        Args:
+            duration: 录音时长（秒），默认 5 秒
+
+        Returns:
+            str: 执行结果
+        """
+        from autolife.voice_agent.audio import AudioRecorder
+        import tempfile
+
+        recorder = AudioRecorder()
+
+        print(f"[录音中] 请说出你的指令（{duration} 秒）...")
+        audio = recorder.record_for_duration(duration)
+
+        # 保存临时文件
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+            temp_path = Path(f.name)
+            recorder.save_to_file(audio, temp_path)
+
+        try:
+            # ASR 识别并执行
+            result = self.run_from_voice(temp_path)
+            return result
+        finally:
+            # 清理临时文件
+            temp_path.unlink(missing_ok=True)
+
+    def run_continuous_interaction(self) -> None:
+        """
+        持续对话模式
+
+        前端点击开始 → 持续监听 → VAD 检测语音停顿 → 自动分段识别 → 执行
+        → 继续监听 → 点击停止退出
+
+        使用 VAD（语音活动检测）自动分段，无需唤醒词
         """
         from autolife.voice_agent.audio import AudioRecorder
         import tempfile
 
         self.is_active = True
-        self.wake_word.start()
         recorder = AudioRecorder()
 
-        print("\n🎤 语音助手已启动,说出唤醒词开始使用...")
-        print(f"   唤醒词: {', '.join(self.wake_word.wake_words)}")
+        print("\n🎤 持续对话模式已启动")
+        print("   开始说话，系统会自动检测语音停顿")
         print("   按 Ctrl+C 退出\n")
 
         try:
             while self.is_active:
-                # 1. 录制一小段音频用于唤醒词检测（3 秒）
-                print("[监听中] 等待唤醒词...")
-                wake_audio = recorder.record_for_duration(3.0)
+                # 使用 VAD 检测语音活动
+                audio = self._record_until_silence(recorder)
 
-                # 保存为临时文件
-                with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
-                    temp_path = Path(f.name)
-                    recorder.save_to_file(wake_audio, temp_path)
+                if len(audio) > 0:
+                    # 保存并识别
+                    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+                        temp_path = Path(f.name)
+                        recorder.save_to_file(audio, temp_path)
 
-                # 2. 使用 ASR 转文本，然后检测唤醒词
-                try:
-                    detected = self.wake_word.detect_from_audio(temp_path, self.asr)
-
-                    if detected:
-                        print(f"\n✓ 检测到唤醒词！")
-                        if self.enable_voice_feedback:
-                            self.tts.speak("我在，请说")
-
-                        # 3. 继续录制完整指令（5 秒）
-                        print("[录音中] 请说出你的指令...")
-                        command_audio = recorder.record_for_duration(5.0)
-
-                        # 保存指令音频
-                        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
-                            command_path = Path(f.name)
-                            recorder.save_to_file(command_audio, command_path)
-
-                        # 4. 识别并执行指令
-                        self.run_from_voice(command_path)
-
-                        # 清理临时文件
-                        command_path.unlink(missing_ok=True)
-
-                except Exception as e:
-                    print(f"[错误] 处理音频时出错: {e}")
-                finally:
-                    # 清理临时文件
-                    temp_path.unlink(missing_ok=True)
+                    try:
+                        self.run_from_voice(temp_path)
+                    except Exception as e:
+                        print(f"[错误] {e}")
+                    finally:
+                        temp_path.unlink(missing_ok=True)
 
         except KeyboardInterrupt:
             print("\n\n正在退出...")
             self.stop_listening()
 
+    def _record_until_silence(
+        self,
+        recorder,
+        chunk_duration: float = 0.5,
+        silence_threshold: float = 0.01,
+        silence_duration: float = 2.0,
+    ):
+        """
+        录音直到检测到静音
+
+        Args:
+            recorder: 录音器
+            chunk_duration: 每次录音块的时长（秒）
+            silence_threshold: 静音阈值（音量）
+            silence_duration: 静音持续时长（秒）才停止
+
+        Returns:
+            np.ndarray: 录制的音频数据
+        """
+        import numpy as np
+
+        audio_chunks = []
+        silence_chunks = 0
+        max_silence_chunks = int(silence_duration / chunk_duration)
+
+        print("[监听中] 等待语音输入...")
+
+        while True:
+            # 录制一小段
+            chunk = recorder.record_for_duration(chunk_duration)
+
+            # 计算音量
+            volume = np.abs(chunk).mean()
+
+            if volume > silence_threshold:
+                # 有声音
+                audio_chunks.append(chunk)
+                silence_chunks = 0
+                print(".", end="", flush=True)  # 显示录音中
+            else:
+                # 静音
+                if len(audio_chunks) > 0:
+                    # 已经录到声音了，开始计数静音
+                    silence_chunks += 1
+                    audio_chunks.append(chunk)
+
+                    if silence_chunks >= max_silence_chunks:
+                        print("\n[检测到] 语音结束")
+                        break
+
+        if len(audio_chunks) == 0:
+            return np.array([])
+
+        return np.concatenate(audio_chunks, axis=0)
+
+    def start_listening(self) -> None:
+        """
+        启动语音监听模式（向后兼容，使用持续对话模式）
+
+        已废弃：请使用 run_continuous_interaction() 代替
+        """
+        print("[提示] start_listening() 已废弃，使用持续对话模式")
+        self.run_continuous_interaction()
+
     def stop_listening(self) -> None:
         """停止语音监听"""
         self.is_active = False
-        self.wake_word.stop()
         print("\n[语音助手] 已停止")
 
     def clear_history(self) -> None:

@@ -105,16 +105,107 @@ class ZhipuASR(ASRBase):
         except (KeyError, ValueError) as e:
             raise RuntimeError(f"ASR API 响应解析失败: {e}")
 
-    def transcribe_stream(self, audio_stream) -> ASRResult:
+    def transcribe_stream(self, audio_stream, callback=None) -> ASRResult:
         """
         流式识别音频
 
         Args:
-            audio_stream: 音频流
+            audio_stream: 音频流（文件路径、Path对象、文件对象或字节数据）
+            callback: 可选的回调函数，接收中间识别结果 callback(text: str)
 
         Returns:
-            ASRResult: 识别结果
+            ASRResult: 最终识别结果
         """
-        # TODO: 实现流式识别
-        # 智谱 API 支持 stream=true，可以实现流式识别
-        raise NotImplementedError("流式识别功能正在开发中")
+        # 准备音频数据
+        if isinstance(audio_stream, (str, Path)):
+            audio_path = Path(audio_stream)
+            if not audio_path.exists():
+                raise FileNotFoundError(f"音频文件不存在: {audio_path}")
+            with open(audio_path, "rb") as f:
+                audio_data = f.read()
+            file_name = audio_path.name
+        elif hasattr(audio_stream, 'read'):
+            # 文件对象
+            audio_data = audio_stream.read()
+            file_name = getattr(audio_stream, 'name', 'audio.wav')
+        else:
+            # 字节数据
+            audio_data = audio_stream
+            file_name = "audio.wav"
+
+        # 准备请求
+        headers = {
+            "Authorization": f"Bearer {self.api_key}"
+        }
+
+        files = {
+            "file": (file_name, audio_data, "audio/wav")
+        }
+
+        data = {
+            "model": self.model,
+            "stream": "true"  # 启用流式识别
+        }
+
+        # 调用流式 API
+        try:
+            response = requests.post(
+                self.endpoint,
+                headers=headers,
+                files=files,
+                data=data,
+                stream=True,  # 启用流式响应
+                timeout=60
+            )
+            response.raise_for_status()
+
+            # 处理流式响应
+            full_text = ""
+            for line in response.iter_lines():
+                if not line:
+                    continue
+
+                line_text = line.decode('utf-8')
+
+                # 处理 SSE 格式: data: {...}
+                if line_text.startswith('data: '):
+                    line_text = line_text[6:]  # 移除 "data: " 前缀
+
+                # 跳过空行和特殊标记
+                if not line_text or line_text == '[DONE]':
+                    continue
+
+                try:
+                    # 解析 JSON 响应
+                    import json
+                    chunk = json.loads(line_text)
+
+                    # 提取文本内容（根据实际API响应格式调整）
+                    if 'text' in chunk:
+                        partial_text = chunk['text']
+                        full_text = partial_text  # 更新完整文本
+
+                        # 调用回调函数传递中间结果
+                        if callback:
+                            callback(partial_text)
+
+                    # 检查是否是最终结果
+                    if chunk.get('is_final', False):
+                        break
+
+                except json.JSONDecodeError:
+                    # 如果不是JSON格式，可能是纯文本
+                    full_text += line_text
+                    if callback:
+                        callback(full_text)
+
+            return ASRResult(
+                text=full_text,
+                confidence=1.0,  # 智谱 API 不返回置信度
+                language="zh"
+            )
+
+        except requests.exceptions.RequestException as e:
+            raise RuntimeError(f"流式 ASR API 调用失败: {e}")
+        except Exception as e:
+            raise RuntimeError(f"流式识别处理失败: {e}")
