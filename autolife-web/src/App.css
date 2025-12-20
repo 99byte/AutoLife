@@ -1,0 +1,117 @@
+/* 拖拽手柄样式 */
+.resize-handle {
+  position: relative;
+  background: #e8e8e8;
+  cursor: col-resize;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.resize-handle:hover {
+  background: #1890ff;
+}
+
+.resize-handle:active {
+  background: #096dd9;
+}
+
+/* react-resizable-panels 的 data 属性样式 */
+[data-separator] {
+  position: relative;
+  background: #e8e8e8;
+  cursor: col-resize;
+  transition: background-color 0.2s ease;
+  outline: none !important;
+}
+
+[data-separator]:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+[data-separator]:hover {
+  background: #d9d9d9;
+}
+
+[data-separator]:active {
+  background: #bfbfbf;
+  outline: none !important;
+}
+
+/* 添加拖拽指示器 */
+[data-separator]::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 2px;
+  height: 40px;
+  background: #d9d9d9;
+  border-radius: 1px;
+}
+
+[data-separator]:hover::before {
+  background: #fff;
+}
+
+/* 确保 Panel 正确布局 */
+[data-panel] {
+  overflow: hidden;
+}
+
+[data-panel-group] {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+/* 响应式适配 */
+@media (max-width: 768px) {
+  /* 移动端隐藏拖拽手柄 */
+  .resize-handle {
+    display: none;
+  }
+}
+
+/* 全局样式优化 */
+* {
+  box-sizing: border-box;
+}
+
+#root {
+  width: 100%;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+/* Ant Design 卡片优化 */
+.ant-card-body {
+  padding: 16px;
+}
+
+.ant-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #bfbfbf;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #8c8c8c;
+}

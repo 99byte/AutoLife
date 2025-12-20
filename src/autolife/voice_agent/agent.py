@@ -2,6 +2,7 @@
 语音代理 - 整合 AutoGLM 和语音交互能力
 """
 
+import os
 import sys
 from pathlib import Path
 from typing import Callable
@@ -76,6 +77,14 @@ class VoiceAgent:
             takeover_callback: 人工接管回调
             enable_voice_feedback: 是否启用语音反馈
         """
+        # 如果没有提供 model_config，从环境变量创建
+        if model_config is None:
+            model_config = ModelConfig(
+                base_url=os.getenv("AUTOGLM_BASE_URL", "http://localhost:8000/v1"),
+                api_key=os.getenv("AUTOGLM_API_KEY", "EMPTY"),
+                model_name=os.getenv("AUTOGLM_MODEL", "autoglm-phone-9b"),
+            )
+
         # 初始化 AutoGLM
         self.phone_agent = PhoneAgent(
             model_config=model_config,

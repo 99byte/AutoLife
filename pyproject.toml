@@ -19,6 +19,7 @@ classifiers = [
 ]
 
 dependencies = [
+    "fastapi>=0.125.0",
     # AutoGLM 核心依赖
     "openai>=2.9.0",
     "pillow>=12.0.0",
@@ -27,9 +28,11 @@ dependencies = [
     # 语音相关
     # "zhipuai",  # 智谱 AI SDK (待正式发布)
     "python-dotenv>=1.2.1",
+    "python-multipart>=0.0.21",
     "requests>=2.31.0", # HTTP 请求（ASR/TTS API 调用）
     "sounddevice>=0.4.6", # 音频播放和录制
     "soundfile>=0.12.1", # 音频文件处理
+    "uvicorn[standard]>=0.38.0",
 ]
 
 [project.optional-dependencies]

@@ -113,7 +113,7 @@ pytest tests/ --cov=src/autolife --cov-report=html
 
 ## 测试统计
 
-截至 2024-12-20:
+截至 2025-12-20:
 - **单元测试**: 18个 ✅
 - **流式测试**: 4个 ✅
 - **总计**: 22个测试
@@ -211,5 +211,5 @@ pytest tests/test_asr.py -vv --tb=long
 
 ---
 
-**最后更新**: 2024-12-20
+**最后更新**: 2025-12-20
 **维护者**: AutoLife Team
