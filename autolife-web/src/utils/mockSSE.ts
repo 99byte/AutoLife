@@ -2,7 +2,7 @@
  * Mock SSE 测试工具
  * 用于在没有真实后端的情况下测试任务执行流程
  */
-import { useVoiceStore } from '../store/voiceStore.js';
+import { useAppStore } from '../store/appStore.js';
 import type { ExecutionStep } from '../types/index.js';
 
 /**
@@ -11,7 +11,7 @@ import type { ExecutionStep } from '../types/index.js';
  * @param task 任务描述
  */
 export function mockTaskExecution(taskId: string, task: string) {
-  const store = useVoiceStore.getState();
+  const store = useAppStore.getState();
 
   // 1. 开始任务
   store.startTask(taskId, task);
@@ -150,7 +150,7 @@ export function mockTaskExecution(taskId: string, task: string) {
  * @param task 任务描述
  */
 export function mockTaskError(taskId: string, task: string) {
-  const store = useVoiceStore.getState();
+  const store = useAppStore.getState();
 
   // 1. 开始任务
   store.startTask(taskId, task);
@@ -189,6 +189,6 @@ export function mockTaskError(taskId: string, task: string) {
  * 清空当前任务
  */
 export function clearMockTask() {
-  const store = useVoiceStore.getState();
+  const store = useAppStore.getState();
   store.clearCurrentTask();
 }

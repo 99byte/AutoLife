@@ -5,27 +5,20 @@ import { create } from 'zustand';
 import type {
   Message,
   Conversation,
-  RecordingStatus,
-  InteractionMode,
   Device,
-  VADStatus,
   SystemConfig,
   TaskExecution,
   ExecutionStep,
   TaskStatus,
 } from '../types/index.js';
 
-interface VoiceStore {
+interface AppStore {
   // 状态
   currentConversation: Conversation | null;
   conversations: Conversation[];
   messages: Message[];
-  recordingStatus: RecordingStatus;
-  interactionMode: InteractionMode;
-  isListening: boolean;
   devices: Device[];
   currentDevice: Device | null;
-  vadStatus: VADStatus;
   config: SystemConfig;
 
   // 任务执行状态
@@ -41,21 +34,9 @@ interface VoiceStore {
   loadConversation: (conversationId: string) => void;
   createConversation: () => void;
 
-  // Actions - 录音控制
-  setRecordingStatus: (status: RecordingStatus) => void;
-  startRecording: () => void;
-  stopRecording: () => void;
-
-  // Actions - 交互模式
-  setInteractionMode: (mode: InteractionMode) => void;
-  toggleListening: () => void;
-
   // Actions - 设备管理
   setDevices: (devices: Device[]) => void;
   selectDevice: (deviceId: string) => void;
-
-  // Actions - VAD 状态
-  updateVADStatus: (status: VADStatus) => void;
 
   // Actions - 配置
   updateConfig: (config: Partial<SystemConfig>) => void;
@@ -71,27 +52,15 @@ interface VoiceStore {
   clearCurrentTask: () => void;
 }
 
-export const useVoiceStore = create<VoiceStore>((set, get) => ({
+export const useAppStore = create<AppStore>((set, get) => ({
   // 初始状态
   currentConversation: null,
   conversations: [],
   messages: [],
-  recordingStatus: 'idle',
-  interactionMode: 'text',
-  isListening: false,
   devices: [],
   currentDevice: null,
-  vadStatus: { isActive: false, volume: 0 },
   config: {
     apiBaseUrl: '/api',
-    wsUrl: 'ws://localhost:8000',
-    enableVoiceFeedback: true,
-    recordingDuration: 5,
-    ttsConfig: {
-      voice: 'default',
-      speed: 1.0,
-      volume: 1.0,
-    },
   },
 
   // 任务执行初始状态
@@ -149,27 +118,6 @@ export const useVoiceStore = create<VoiceStore>((set, get) => ({
     }));
   },
 
-  // 录音控制
-  setRecordingStatus: (status) => set({ recordingStatus: status }),
-
-  startRecording: () => {
-    set({ recordingStatus: 'recording' });
-  },
-
-  stopRecording: () => {
-    set({ recordingStatus: 'processing' });
-  },
-
-  // 交互模式
-  setInteractionMode: (mode) => set({ interactionMode: mode }),
-
-  toggleListening: () => {
-    set((state) => ({
-      isListening: !state.isListening,
-      recordingStatus: !state.isListening ? 'recording' : 'idle',
-    }));
-  },
-
   // 设备管理
   setDevices: (devices) => {
     set({ devices });
@@ -189,9 +137,6 @@ export const useVoiceStore = create<VoiceStore>((set, get) => ({
       set({ currentDevice: device });
     }
   },
-
-  // VAD 状态
-  updateVADStatus: (status) => set({ vadStatus: status }),
 
   // 配置
   updateConfig: (config) => {

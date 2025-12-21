@@ -2,33 +2,30 @@
  * SSE (Server-Sent Events) 服务
  * 用于接收后端流式返回的任务执行步骤
  */
-import { useVoiceStore } from '../store/voiceStore.js';
-import type { SSEEventType, ExecutionStep, ActionDetail } from '../types/index.js';
+import { useAppStore } from '../store/appStore.js';
+import type { ExecutionStep, ActionDetail } from '../types/index.js';
 
 export class SSEService {
   private eventSource: EventSource | null = null;
-  private taskId: string = '';
 
   /**
    * 启动 SSE 连接
-   * @param taskId 任务 ID
+   * @param _taskId 任务 ID（暂未使用）
    * @param text 用户输入的任务描述
    */
-  start(taskId: string, text: string) {
-    const store = useVoiceStore.getState();
+  start(_taskId: string, text: string) {
+    const store = useAppStore.getState();
 
     // 如果已有连接，先断开
     if (this.eventSource) {
       this.stop();
     }
 
-    this.taskId = taskId;
-
     // 初始化任务
-    store.startTask(taskId, text);
+    store.startTask(_taskId, text);
 
     // 建立 SSE 连接
-    const url = `/api/voice/stream?taskId=${taskId}&text=${encodeURIComponent(text)}`;
+    const url = `/api/agent/stream?taskId=${_taskId}&text=${encodeURIComponent(text)}`;
     this.eventSource = new EventSource(url);
 
     // 保存连接到 store
@@ -41,7 +38,7 @@ export class SSEService {
   private setupEventListeners() {
     if (!this.eventSource) return;
 
-    const store = useVoiceStore.getState();
+    const store = useAppStore.getState();
 
     // 1. 任务开始
     this.eventSource.addEventListener('task_start', (e) => {
@@ -123,7 +120,7 @@ export class SSEService {
       this.eventSource = null;
     }
 
-    const store = useVoiceStore.getState();
+    const store = useAppStore.getState();
     store.disconnectSSE();
   }
 
@@ -131,7 +128,7 @@ export class SSEService {
    * 取消任务
    */
   cancel() {
-    const store = useVoiceStore.getState();
+    const store = useAppStore.getState();
     store.clearCurrentTask();
     this.stop();
   }

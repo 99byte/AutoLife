@@ -10,7 +10,7 @@ from pathlib import Path
 # 自动加载 .env 文件
 from dotenv import load_dotenv
 
-from autolife.voice_agent.agent import VoiceAgent
+from autolife.agent import AutoLifeAgent
 from phone_agent.agent import AgentConfig
 from phone_agent.model import ModelConfig
 
@@ -33,24 +33,17 @@ def main():
             print("[提示] 未找到 .env 文件，将使用命令行参数或系统环境变量")
 
     parser = argparse.ArgumentParser(
-        description="AutoLife - 基于 AutoGLM 的语音智能助手",
+        description="AutoLife - 基于 AutoGLM 的智能助手",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
-  # 文本模式运行单次任务
-  autolife --text "打开微信"
-
-  # 单次语音交互（录音 5 秒）
-  autolife --listen single
-
-  # 持续对话模式（自动检测语音停顿）
-  autolife --listen continuous
+  # 执行任务
+  autolife "打开微信"
 
   # 指定 API 配置
   autolife --api-key YOUR_KEY --base-url https://api.example.com/v1
 
 环境变量:
-  ZHIPUAI_API_KEY          智谱 AI API 密钥
   AUTOGLM_BASE_URL         AutoGLM 模型 API 地址
   AUTOGLM_MODEL            AutoGLM 模型名称
   PHONE_AGENT_DEVICE_ID    ADB 设备 ID
@@ -70,24 +63,12 @@ def main():
     )
     parser.add_argument("--api-key", default=os.getenv("AUTOGLM_API_KEY", "EMPTY"), help="API 密钥")
 
-    # 运行模式
-    parser.add_argument("--text", "-t", help="文本模式: 直接执行指定任务")
-    parser.add_argument(
-        "--listen",
-        "-l",
-        choices=["single", "continuous"],
-        help="语音交互模式: single=单次交互(5秒), continuous=持续对话(自动分段)",
-    )
-    parser.add_argument("--audio", "-a", help="音频文件模式: 从音频文件识别并执行任务")
+    # 任务参数
+    parser.add_argument("task", nargs="?", help="要执行的任务描述")
 
     # 设备配置
     parser.add_argument(
         "--device-id", default=os.getenv("PHONE_AGENT_DEVICE_ID"), help="ADB 设备 ID"
-    )
-
-    # 语音配置
-    parser.add_argument(
-        "--no-voice-feedback", action="store_true", help="禁用语音反馈,仅文本输出"
     )
 
     # 其他选项
@@ -97,9 +78,10 @@ def main():
 
     args = parser.parse_args()
 
-    # 验证运行模式
-    if not any([args.text, args.listen, args.audio]):
-        parser.error("请指定运行模式: --text, --listen 或 --audio")
+    # 验证输入
+    if not args.task:
+        parser.print_help()
+        sys.exit(1)
 
     # 配置模型
     model_config = ModelConfig(
@@ -114,39 +96,16 @@ def main():
         verbose=args.verbose,
     )
 
-    # 创建语音助手
+    # 创建助手
     try:
-        agent = VoiceAgent(
+        agent = AutoLifeAgent(
             model_config=model_config,
             agent_config=agent_config,
-            enable_voice_feedback=not args.no_voice_feedback,
         )
 
-        # 根据模式运行
-        if args.text:
-            # 文本模式
-            result = agent.run_from_text(args.text)
-            print(f"\n✅ 任务完成: {result}")
-
-        elif args.audio:
-            # 音频文件模式
-            result = agent.run_from_voice(args.audio)
-            print(f"\n✅ 任务完成: {result}")
-
-        elif args.listen:
-            # 语音交互模式
-            if args.listen == "single":
-                # 单次交互
-                print("\n[单次交互模式] 点击按钮开始录音...")
-                result = agent.run_single_interaction()
-                print(f"\n✅ 任务完成: {result}")
-            else:
-                # 持续对话
-                try:
-                    agent.run_continuous_interaction()
-                except KeyboardInterrupt:
-                    print("\n\n正在退出...")
-                    agent.stop_listening()
+        # 执行任务
+        result = agent.run(args.task)
+        print(f"\n✅ 任务完成: {result}")
 
     except Exception as e:
         print(f"\n❌ 错误: {e}", file=sys.stderr)

@@ -55,7 +55,7 @@ function App() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <AudioOutlined style={{ fontSize: '32px', color: '#1890ff' }} />
             <Title level={3} style={{ margin: 0 }}>
-              AutoLife 语音助手
+              AutoLife 助手
             </Title>
           </div>
           <Space>
@@ -80,7 +80,7 @@ function App() {
 
         <Footer style={{ textAlign: 'center', background: '#fff', padding: '12px' }}>
           <Text type="secondary" style={{ fontSize: '12px' }}>
-            AutoLife 语音助手 ©2025 | 基于 AutoGLM 开发
+            AutoLife 助手 ©2025 | 基于 AutoGLM 开发
           </Text>
         </Footer>
       </Layout>

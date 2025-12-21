@@ -1,11 +1,11 @@
 """
-AutoLife - 基于 AutoGLM 的语音智能助手
+AutoLife - 基于 AutoGLM 的智能助手
 
-AutoLife 是一个语音驱动的智能手机助手,通过语音交互控制手机完成各种任务。
+AutoLife 是一个智能手机助手,通过自然语言指令控制手机完成各种任务。
 """
 
 __version__ = "0.1.0"
 
-from autolife.voice_agent.agent import VoiceAgent
+from autolife.agent import AutoLifeAgent
 
-__all__ = ["VoiceAgent", "__version__"]
+__all__ = ["AutoLifeAgent", "__version__"]

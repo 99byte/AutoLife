@@ -11,8 +11,6 @@ export interface Message {
   role: MessageRole;
   content: string;
   timestamp: number;
-  audioUrl?: string;  // 语音消息的音频 URL
-  confidence?: number; // ASR 识别置信度
   isTyping?: boolean;  // 是否正在输入（AI 响应中）
 }
 
@@ -25,47 +23,12 @@ export interface Conversation {
   updatedAt: number;
 }
 
-// 录音状态
-export type RecordingStatus = 'idle' | 'recording' | 'processing' | 'completed' | 'error';
-
-// 交互模式
-export type InteractionMode = 'text' | 'single' | 'continuous';
-
 // 设备信息
 export interface Device {
   id: string;
   name: string;
   type: 'android' | 'harmony';
   status: 'connected' | 'disconnected';
-}
-
-// ASR 识别结果
-export interface ASRResult {
-  text: string;
-  confidence: number;
-  duration: number;
-}
-
-// TTS 配置
-export interface TTSConfig {
-  voice?: string;    // 音色选择
-  speed?: number;    // 语速 (0.5 - 2.0)
-  volume?: number;   // 音量 (0 - 1.0)
-}
-
-// VAD 状态
-export interface VADStatus {
-  isActive: boolean;  // 是否检测到语音活动
-  volume: number;     // 当前音量
-}
-
-// WebSocket 消息类型
-export type WSMessageType = 'asr' | 'response' | 'vad' | 'error';
-
-export interface WSMessage {
-  type: WSMessageType;
-  data: any;
-  timestamp: number;
 }
 
 // API 响应基础接口
@@ -76,30 +39,10 @@ export interface ApiResponse<T = any> {
   error?: string;
 }
 
-// 语音交互请求
-export interface VoiceRequest {
-  mode: InteractionMode;
-  audio?: Blob;
-  text?: string;
-  config?: TTSConfig;
-}
-
-// 语音交互响应
-export interface VoiceResponse {
-  text: string;           // 执行结果文本
-  audioUrl?: string;      // TTS 音频 URL
-  asrResult?: ASRResult;  // ASR 识别结果
-  duration: number;       // 总耗时（毫秒）
-}
-
 // 系统配置
 export interface SystemConfig {
   apiBaseUrl: string;
-  wsUrl: string;
   deviceId?: string;
-  enableVoiceFeedback: boolean;
-  recordingDuration: number;  // 单次录音时长（秒）
-  ttsConfig: TTSConfig;
 }
 
 // ==================== 任务执行相关类型 ====================

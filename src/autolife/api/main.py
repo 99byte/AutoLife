@@ -3,12 +3,12 @@ FastAPI 应用主入口
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routes import health, voice
+from .routes import health, agent, scrcpy
 
 # 创建 FastAPI 应用
 app = FastAPI(
     title="AutoLife API",
-    description="AutoLife 语音助手 REST API",
+    description="AutoLife 智能助手 REST API",
     version="0.1.0"
 )
 
@@ -28,7 +28,8 @@ app.add_middleware(
 
 # 注册路由
 app.include_router(health.router)
-app.include_router(voice.router)
+app.include_router(agent.router)
+app.include_router(scrcpy.router)
 
 
 @app.get("/")

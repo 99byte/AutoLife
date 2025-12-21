@@ -22,8 +22,8 @@ import {
   CompressOutlined,
   CameraOutlined,
 } from '@ant-design/icons';
-import { useVoiceStore } from '../store/voiceStore.js';
-import type { ExecutionStep, ActionType } from '../types/index.js';
+import { useAppStore } from '../store/appStore.js';
+import type { ActionType } from '../types/index.js';
 
 // 动作类型图标映射
 const ACTION_ICONS: Record<ActionType, React.ReactNode> = {
@@ -60,7 +60,7 @@ const ACTION_COLORS: Record<ActionType, string> = {
 };
 
 export const StepsPanel: React.FC = () => {
-  const { currentTask } = useVoiceStore();
+  const { currentTask } = useAppStore();
 
   // 空状态
   if (!currentTask) {

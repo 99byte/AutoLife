@@ -5,8 +5,6 @@ import axios from 'axios';
 import type { AxiosInstance } from 'axios';
 import type {
   ApiResponse,
-  VoiceRequest,
-  VoiceResponse,
   Device,
   Conversation,
   SystemConfig,
@@ -51,83 +49,31 @@ class ApiService {
   }
 
   /**
-   * 文本模式交互
+   * 执行任务
    */
-  async sendTextCommand(text: string): Promise<ApiResponse<VoiceResponse>> {
+  async runTask(task: string): Promise<ApiResponse<{ result: string }>> {
     try {
-      const response = await this.client.post<ApiResponse<VoiceResponse>>(
-        '/voice/text',
-        { text }
+      const response = await this.client.post<ApiResponse<{ result: string }>>(
+        '/agent/run',
+        { task }
       );
       return response.data;
     } catch (error: any) {
       return {
         success: false,
-        error: error.message || '发送文本指令失败',
+        error: error.message || '执行任务失败',
       };
     }
   }
 
   /**
-   * 发送文本指令（流式）
+   * 发送任务指令（流式）
    * 使用 SSE 接收任务执行步骤
    */
-  sendTextCommandStream(text: string): string {
+  runTaskStream(task: string): string {
     const taskId = `task_${Date.now()}`;
-    sseService.start(taskId, text);
+    sseService.start(taskId, task);
     return taskId;
-  }
-
-  /**
-   * 单次语音交互
-   */
-  async sendSingleVoice(audioBlob: Blob): Promise<ApiResponse<VoiceResponse>> {
-    try {
-      const formData = new FormData();
-      formData.append('audio', audioBlob, 'recording.wav');
-
-      const response = await this.client.post<ApiResponse<VoiceResponse>>(
-        '/voice/single',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
-      return response.data;
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.message || '单次语音交互失败',
-      };
-    }
-  }
-
-  /**
-   * 上传音频文件
-   */
-  async uploadAudio(file: File): Promise<ApiResponse<VoiceResponse>> {
-    try {
-      const formData = new FormData();
-      formData.append('audio', file);
-
-      const response = await this.client.post<ApiResponse<VoiceResponse>>(
-        '/voice/upload',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
-      return response.data;
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.message || '上传音频文件失败',
-      };
-    }
   }
 
   /**

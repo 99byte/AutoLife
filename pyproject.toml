@@ -1,14 +1,14 @@
 [project]
 name = "autolife"
 version = "0.1.0"
-description = "基于 AutoGLM 的语音智能助手 - AutoGLM Voice Assistant with ASR & TTS"
+description = "基于 AutoGLM 的智能助手 - AutoGLM Assistant"
 readme = "README.md"
 authors = [
     { name = "AutoLife Team", email = "autolife@example.com" }
 ]
 license = { text = "Apache-2.0" }
 requires-python = ">=3.10"
-keywords = ["voice-assistant", "autoglm", "asr", "tts", "phone-automation"]
+keywords = ["assistant", "autoglm", "phone-automation"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -24,15 +24,12 @@ dependencies = [
     "openai>=2.9.0",
     "pillow>=12.0.0",
     # "pure-python-adb",  # 暂时注释,需要时手动安装
-    # "opencv-python",
-    # 语音相关
-    # "zhipuai",  # 智谱 AI SDK (待正式发布)
     "python-dotenv>=1.2.1",
     "python-multipart>=0.0.21",
-    "requests>=2.31.0", # HTTP 请求（ASR/TTS API 调用）
-    "sounddevice>=0.4.6", # 音频播放和录制
-    "soundfile>=0.12.1", # 音频文件处理
     "uvicorn[standard]>=0.38.0",
+    # scrcpy 投屏相关（使用命令行工具 + OpenCV）
+    "opencv-python>=4.8.0",    # 视频帧处理和 JPEG 编码
+    "numpy>=1.24.0",           # 数组处理
 ]
 
 [project.optional-dependencies]
@@ -42,15 +39,6 @@ dev = [
     "black>=23.0.0",
     "ruff>=0.1.0",
     "mypy>=1.0.0",
-]
-
-whisper = [
-    "openai-whisper>=20230918",
-    "torch>=2.0.0",
-]
-
-porcupine = [
-    "pvporcupine>=2.0.0",  # 唤醒词检测
 ]
 
 [project.urls]

@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { Panel, Group, Separator } from 'react-resizable-panels';
-import { ScreencastPanel } from './ScreencastPanel.js';
+import { ScreenMirror } from './ScreenMirror.js';
 import { StepsPanel } from './StepsPanel.js';
 import { ChatPanel } from './ChatPanel.js';
 
@@ -20,7 +20,7 @@ export const ThreeColumnLayout: React.FC = () => {
       {/* 左侧：手机投屏 */}
       <Panel defaultSize={30} minSize={15} id="screencast">
         <div style={{ height: '100%' }}>
-          <ScreencastPanel />
+          <ScreenMirror />
         </div>
       </Panel>
 
