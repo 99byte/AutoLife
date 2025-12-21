@@ -118,3 +118,54 @@ export interface SSEMessage {
   data?: any;                                      // 具体数据（根据 type 不同而不同）
   timestamp: number;
 }
+
+// ==================== 生活助手相关类型 ====================
+
+// 活动分类
+export type ActivityCategory =
+  | 'food'      // 饮食（外卖、订餐、奶茶）
+  | 'work'      // 工作（会议、邮件、文档）
+  | 'life'      // 生活（购物、音乐、运动）
+  | 'social'    // 社交（微信、聊天、分享）
+  | 'other';    // 其他
+
+// 活动状态
+export type ActivityStatus = 'completed' | 'failed' | 'cancelled';
+
+// 活动记录接口
+export interface ActivityRecord {
+  id: string;                          // 唯一标识
+  title: string;                       // 活动标题（如："点了外卖"）
+  description: string;                 // 活动详情（如："麦当劳套餐"）
+  category: ActivityCategory;          // 活动分类
+  status: ActivityStatus;              // 活动状态
+  timestamp: number;                   // 完成时间戳
+  taskId?: string;                     // 关联的任务 ID
+  duration?: number;                   // 执行耗时（毫秒）
+  metadata?: {                         // 扩展元数据
+    app?: string;                      // 使用的应用
+    steps?: number;                    // 执行步骤数
+    [key: string]: any;
+  };
+}
+
+// 待办优先级
+export type TodoPriority = 'high' | 'medium' | 'low';
+
+// 待办状态
+export type TodoStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
+
+// 待办事项接口
+export interface TodoItem {
+  id: string;                          // 唯一标识
+  title: string;                       // 待办标题
+  description?: string;                // 详细描述
+  category?: ActivityCategory;         // 分类（可选）
+  priority: TodoPriority;              // 优先级
+  status: TodoStatus;                  // 状态
+  createdAt: number;                   // 创建时间
+  updatedAt: number;                   // 更新时间
+  dueDate?: number;                    // 截止时间（可选）
+  completedAt?: number;                // 完成时间
+  relatedActivityId?: string;          // 关联的活动记录 ID
+}

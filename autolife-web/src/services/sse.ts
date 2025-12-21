@@ -3,6 +3,7 @@
  * 用于接收后端流式返回的任务执行步骤
  */
 import { useAppStore } from '../store/appStore.js';
+import { shouldCreateActivity } from '../utils/activityAnalyzer.js';
 import type { ExecutionStep, ActionDetail } from '../types/index.js';
 
 export class SSEService {
@@ -93,6 +94,13 @@ export class SSEService {
     this.eventSource.addEventListener('task_complete', (e) => {
       const data = JSON.parse(e.data);
       store.completeTask(data.message);
+
+      // 自动创建活动记录
+      const currentTask = store.currentTask;
+      if (currentTask && shouldCreateActivity(currentTask)) {
+        store.createActivityFromTask(currentTask);
+      }
+
       this.stop();
     });
 
