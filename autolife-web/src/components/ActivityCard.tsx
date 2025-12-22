@@ -58,7 +58,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({ activity }) => {
         borderLeft: `3px solid ${CATEGORY_COLORS[activity.category]}`,
       }}
     >
-      <Space direction="vertical" size="small" style={{ width: '100%' }}>
+      <Space orientation="vertical" size="small" style={{ width: '100%' }}>
         {/* 分类标签 */}
         <Tag color={CATEGORY_COLORS[activity.category]} icon={<span>{CATEGORY_ICONS[activity.category]}</span>}>
           {CATEGORY_NAMES[activity.category]}

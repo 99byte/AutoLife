@@ -5,8 +5,27 @@ import React from 'react';
 import { Panel, Group, Separator } from 'react-resizable-panels';
 import { ActivityPanel } from './ActivityPanel.js';
 import { EnhancedChatPanel } from './EnhancedChatPanel.js';
+import { useAppStore } from '../store/appStore.js';
 
 export const TwoColumnLayout: React.FC = () => {
+  const { chatPanelVisible } = useAppStore();
+
+  // 如果聊天面板隐藏，显示全宽活动面板
+  if (!chatPanelVisible) {
+    return (
+      <div style={{ height: '100%', width: '100%' }}>
+        <div
+          style={{
+            height: '100%',
+            padding: '16px',
+          }}
+        >
+          <ActivityPanel />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Group
       orientation="horizontal"

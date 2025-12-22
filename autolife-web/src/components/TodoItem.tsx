@@ -86,7 +86,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onEdit }) => {
         </Popconfirm>,
       ]}
     >
-      <Space style={{ width: '100%' }} direction="vertical" size="small">
+      <Space style={{ width: '100%' }} orientation="vertical" size="small">
         <Space>
           <Checkbox
             checked={todo.status === 'completed'}

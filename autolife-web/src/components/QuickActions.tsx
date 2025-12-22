@@ -17,12 +17,12 @@ const { Text } = Typography;
 const QUICK_QUESTIONS = [
   {
     icon: <ShoppingOutlined />,
-    text: '帮我点外卖',
-    emoji: '🍔',
+    text: '打开小红书获取丽江旅游美食',
+    emoji: 'Test1',
   },
   {
     icon: <CoffeeOutlined />,
-    text: '订一杯咖啡',
+    text: ' Test2：订一杯咖啡',
     emoji: '☕',
   },
   {
@@ -48,7 +48,7 @@ interface QuickActionsProps {
 
 export const QuickActions: React.FC<QuickActionsProps> = ({ onSelect }) => {
   return (
-    <Space direction="vertical" size="small" style={{ width: '100%' }}>
+    <Space orientation="vertical" size="small" style={{ width: '100%' }}>
       <Text strong style={{ fontSize: '14px', color: '#666' }}>
         💡 快捷问题
       </Text>

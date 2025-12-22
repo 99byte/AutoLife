@@ -5,14 +5,14 @@ AutoLife Agent - 整合 AutoGLM 的智能助手
 import os
 import sys
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Generator
 
 # 添加 Open-AutoGLM 到 Python 路径
 AUTOGLM_PATH = Path(__file__).parent.parent.parent / "Open-AutoGLM"
 sys.path.insert(0, str(AUTOGLM_PATH))
 
 from phone_agent import PhoneAgent
-from phone_agent.agent import AgentConfig
+from phone_agent.agent import AgentConfig, StepResult
 from phone_agent.model import ModelConfig
 
 
@@ -97,6 +97,56 @@ class AutoLifeAgent:
         self.conversation_history.append({"role": "assistant", "content": result})
 
         return result
+
+    def run_streaming(self, task: str, max_steps: int = 100) -> Generator[StepResult, None, str]:
+        """
+        流式执行任务，逐步返回执行结果
+
+        Args:
+            task: 任务描述
+            max_steps: 最大步数
+
+        Yields:
+            StepResult: 每一步的执行结果
+
+        Returns:
+            str: 最终结果消息
+        """
+        print(f"\n[用户] {task}")
+
+        # 重置 agent 状态
+        self.phone_agent.reset()
+
+        # 第一步（带任务描述）
+        result = self.phone_agent.step(task)
+        yield result
+
+        if result.finished:
+            final_message = result.message or "任务完成"
+            # 记录历史
+            self.conversation_history.append({"role": "user", "content": task})
+            self.conversation_history.append({"role": "assistant", "content": final_message})
+            print(f"[助手] {final_message}")
+            return final_message
+
+        # 后续步骤
+        while self.phone_agent.step_count < max_steps:
+            result = self.phone_agent.step()
+            yield result
+
+            if result.finished:
+                final_message = result.message or "任务完成"
+                # 记录历史
+                self.conversation_history.append({"role": "user", "content": task})
+                self.conversation_history.append({"role": "assistant", "content": final_message})
+                print(f"[助手] {final_message}")
+                return final_message
+
+        final_message = "已达到最大步数限制"
+        self.conversation_history.append({"role": "user", "content": task})
+        self.conversation_history.append({"role": "assistant", "content": final_message})
+        print(f"[助手] {final_message}")
+        return final_message
 
     def clear_history(self) -> None:
         """清空对话历史"""

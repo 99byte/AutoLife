@@ -20,6 +20,12 @@ import {
   saveTodos,
   loadActivities,
   loadTodos,
+  saveMessages,
+  loadMessages,
+  saveConversations,
+  loadConversations,
+  saveCurrentConversationId,
+  loadCurrentConversationId,
 } from '../utils/storage.js';
 import {
   analyzeTaskCategory,
@@ -35,6 +41,7 @@ interface AppStore {
   devices: Device[];
   currentDevice: Device | null;
   config: SystemConfig;
+  chatPanelVisible: boolean;
 
   // 任务执行状态
   currentTask: TaskExecution | null;
@@ -53,6 +60,8 @@ interface AppStore {
   clearMessages: () => void;
   loadConversation: (conversationId: string) => void;
   createConversation: () => void;
+  deleteConversation: (conversationId: string) => void;
+  setChatPanelVisible: (visible: boolean) => void;
 
   // Actions - 设备管理
   setDevices: (devices: Device[]) => void;
@@ -101,6 +110,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   config: {
     apiBaseUrl: '/api',
   },
+  chatPanelVisible: true,
 
   // 任务执行初始状态
   currentTask: null,
@@ -120,26 +130,63 @@ export const useAppStore = create<AppStore>((set, get) => ({
       id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
       timestamp: Date.now(),
     };
-    set((state) => ({
-      messages: [...state.messages, newMessage],
-    }));
+    set((state) => {
+      const updatedMessages = [...state.messages, newMessage];
+
+      // 更新当前对话
+      let updatedConversation = state.currentConversation;
+      let updatedConversations = state.conversations;
+
+      if (updatedConversation) {
+        updatedConversation = {
+          ...updatedConversation,
+          messages: updatedMessages,
+          updatedAt: Date.now(),
+          // 根据第一条用户消息生成标题
+          title: updatedConversation.title === '新对话' && message.role === 'user'
+            ? message.content.slice(0, 20) + (message.content.length > 20 ? '...' : '')
+            : updatedConversation.title,
+        };
+
+        // 更新对话列表中的当前对话
+        updatedConversations = state.conversations.map(c =>
+          c.id === updatedConversation!.id ? updatedConversation! : c
+        );
+
+        // 持久化
+        saveConversations(updatedConversations);
+      }
+
+      saveMessages(updatedMessages);
+      return {
+        messages: updatedMessages,
+        currentConversation: updatedConversation,
+        conversations: updatedConversations,
+      };
+    });
   },
 
   updateMessage: (id, updates) => {
-    set((state) => ({
-      messages: state.messages.map((msg) =>
+    set((state) => {
+      const updated = state.messages.map((msg) =>
         msg.id === id ? { ...msg, ...updates } : msg
-      ),
-    }));
+      );
+      saveMessages(updated);
+      return { messages: updated };
+    });
   },
 
   clearMessages: () => {
+    saveMessages([]);
     set({ messages: [] });
   },
 
   loadConversation: (conversationId) => {
-    const conversation = get().conversations.find((c) => c.id === conversationId);
+    const state = get();
+    const conversation = state.conversations.find((c) => c.id === conversationId);
     if (conversation) {
+      saveCurrentConversationId(conversationId);
+      saveMessages(conversation.messages);
       set({
         currentConversation: conversation,
         messages: conversation.messages,
@@ -148,18 +195,56 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
 
   createConversation: () => {
+    const state = get();
+    const now = Date.now();
+
+    // 创建新对话
     const newConversation: Conversation = {
-      id: Date.now().toString(),
-      title: `对话 ${get().conversations.length + 1}`,
+      id: now.toString(),
+      title: '新对话',
       messages: [],
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      createdAt: now,
+      updatedAt: now,
     };
-    set((state) => ({
-      conversations: [...state.conversations, newConversation],
+
+    // 更新对话列表
+    const updatedConversations = [...state.conversations, newConversation];
+
+    // 持久化
+    saveConversations(updatedConversations);
+    saveCurrentConversationId(newConversation.id);
+    saveMessages([]);
+
+    set({
+      conversations: updatedConversations,
       currentConversation: newConversation,
       messages: [],
-    }));
+    });
+  },
+
+  deleteConversation: (conversationId) => {
+    set((state) => {
+      const updatedConversations = state.conversations.filter(c => c.id !== conversationId);
+      saveConversations(updatedConversations);
+
+      // 如果删除的是当前对话，切换到最新的对话或清空
+      if (state.currentConversation?.id === conversationId) {
+        const latestConversation = updatedConversations[updatedConversations.length - 1] || null;
+        saveCurrentConversationId(latestConversation?.id || null);
+        saveMessages(latestConversation?.messages || []);
+        return {
+          conversations: updatedConversations,
+          currentConversation: latestConversation,
+          messages: latestConversation?.messages || [],
+        };
+      }
+
+      return { conversations: updatedConversations };
+    });
+  },
+
+  setChatPanelVisible: (visible) => {
+    set({ chatPanelVisible: visible });
   },
 
   // 设备管理
@@ -401,6 +486,31 @@ export const useAppStore = create<AppStore>((set, get) => ({
   loadPersistedData: () => {
     const activities = loadActivities();
     const todos = loadTodos();
-    set({ activityRecords: activities, todoItems: todos });
+    const conversations = loadConversations();
+    const currentConversationId = loadCurrentConversationId();
+
+    // 恢复当前对话
+    let currentConversation: Conversation | null = null;
+    let messages: Message[] = [];
+
+    if (currentConversationId) {
+      currentConversation = conversations.find(c => c.id === currentConversationId) || null;
+      messages = currentConversation?.messages || loadMessages();
+    } else if (conversations.length > 0) {
+      // 如果没有保存的当前对话 ID，使用最新的对话
+      currentConversation = conversations[conversations.length - 1];
+      messages = currentConversation.messages;
+    } else {
+      // 没有任何对话，加载旧的消息格式（兼容性）
+      messages = loadMessages();
+    }
+
+    set({
+      activityRecords: activities,
+      todoItems: todos,
+      conversations,
+      currentConversation,
+      messages,
+    });
   },
 }));

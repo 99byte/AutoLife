@@ -12,6 +12,8 @@ export interface Message {
   content: string;
   timestamp: number;
   isTyping?: boolean;  // 是否正在输入（AI 响应中）
+  steps?: ExecutionStep[];  // 执行步骤（保存思维链）
+  taskStatus?: TaskStatus;  // 任务状态（如果消息包含任务执行结果）
 }
 
 // 对话会话接口

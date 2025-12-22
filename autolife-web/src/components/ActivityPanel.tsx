@@ -2,14 +2,14 @@
  * 活动面板主容器
  */
 import React, { useState } from 'react';
-import { Card, Tabs, Badge } from 'antd';
+import { Card, Tabs, Badge, Button } from 'antd';
 import { ClockCircleOutlined, CheckSquareOutlined } from '@ant-design/icons';
 import { ActivityTimeline } from './ActivityTimeline.js';
 import { TodoList } from './TodoList.js';
 import { useAppStore } from '../store/appStore.js';
 
 export const ActivityPanel: React.FC = () => {
-  const { getTodayActivities, getTodosByStatus } = useAppStore();
+  const { getTodayActivities, getTodosByStatus, chatPanelVisible, setChatPanelVisible } = useAppStore();
   const [activeTab, setActiveTab] = useState('activities');
 
   // 获取今日活动数量
@@ -56,7 +56,25 @@ export const ActivityPanel: React.FC = () => {
     <Card
       style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
       styles={{ body: { flex: 1, overflow: 'hidden', padding: '16px' } }}
-      title="生活助手"
+      title="Automated Your Life"
+      extra={
+        !chatPanelVisible && (
+          <Button
+            type="primary"
+            onClick={() => setChatPanelVisible(true)}
+            style={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              border: 'none',
+              borderRadius: 20,
+              paddingLeft: 16,
+              paddingRight: 16,
+            }}
+          >
+            <span style={{ marginRight: 4 }}>✨</span>
+            AI Copilot
+          </Button>
+        )
+      }
     >
       <Tabs
         activeKey={activeTab}

@@ -45,7 +45,7 @@ export const TodoList: React.FC = () => {
   return (
     <div>
       {/* 头部：筛选 + 添加按钮 */}
-      <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+      <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
         <Space style={{ width: '100%', justifyContent: 'space-between' }}>
           <Segmented
             options={[
