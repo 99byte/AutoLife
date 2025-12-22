@@ -1,7 +1,7 @@
 import { ConfigProvider } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import { useEffect } from 'react';
-import { TwoColumnLayout } from './components/TwoColumnLayout.js';
+import { ThreeColumnLayout } from './components/ThreeColumnLayout.js';
 import { useAppStore } from './store/appStore.js';
 import './App.css';
 
@@ -24,7 +24,7 @@ function App() {
       }}
     >
       <div style={{ height: '100vh', background: '#f0f2f5' }}>
-        <TwoColumnLayout />
+        <ThreeColumnLayout />
       </div>
     </ConfigProvider>
   );

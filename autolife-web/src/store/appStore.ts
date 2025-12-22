@@ -42,6 +42,7 @@ interface AppStore {
   currentDevice: Device | null;
   config: SystemConfig;
   chatPanelVisible: boolean;
+  scrcpyPanelVisible: boolean;
 
   // 任务执行状态
   currentTask: TaskExecution | null;
@@ -62,6 +63,7 @@ interface AppStore {
   createConversation: () => void;
   deleteConversation: (conversationId: string) => void;
   setChatPanelVisible: (visible: boolean) => void;
+  setScrcpyPanelVisible: (visible: boolean) => void;
 
   // Actions - 设备管理
   setDevices: (devices: Device[]) => void;
@@ -111,6 +113,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     apiBaseUrl: '/api',
   },
   chatPanelVisible: true,
+  scrcpyPanelVisible: true,
 
   // 任务执行初始状态
   currentTask: null,
@@ -245,6 +248,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   setChatPanelVisible: (visible) => {
     set({ chatPanelVisible: visible });
+  },
+
+  setScrcpyPanelVisible: (visible) => {
+    set({ scrcpyPanelVisible: visible });
   },
 
   // 设备管理

@@ -9,6 +9,7 @@ import type { ExecutionStep, ActionDetail } from '../types/index.js';
 export class SSEService {
   private eventSource: EventSource | null = null;
   private errorHandled: boolean = false;  // 防止重复处理错误
+  private currentTaskId: string | null = null;  // 当前任务ID
 
   /**
    * 启动 SSE 连接
@@ -22,6 +23,9 @@ export class SSEService {
     if (this.eventSource) {
       this.stop();
     }
+
+    // 保存当前任务ID
+    this.currentTaskId = _taskId;
 
     // 初始化任务
     store.startTask(_taskId, text);
@@ -96,7 +100,22 @@ export class SSEService {
       });
     });
 
-    // 6. 任务完成
+    // 6. 任务取消
+    this.eventSource.addEventListener('task_cancelled', (e) => {
+      console.log('SSE: Task cancelled', e.data);
+      const data = JSON.parse(e.data);
+      const message = data.message || '任务已取消';
+
+      store.failTask(message);
+      store.addMessage({
+        role: 'assistant',
+        content: `⚠️ ${message}`,
+      });
+
+      this.stop();
+    });
+
+    // 7. 任务完成
     this.eventSource.addEventListener('task_complete', (e) => {
       console.log('SSE: Task complete', e.data);
       const data = JSON.parse(e.data);
@@ -176,6 +195,7 @@ export class SSEService {
       this.eventSource = null;
     }
 
+    this.currentTaskId = null;
     const store = useAppStore.getState();
     store.disconnectSSE();
   }
@@ -183,9 +203,26 @@ export class SSEService {
   /**
    * 取消任务
    */
-  cancel() {
+  async cancel() {
     const store = useAppStore.getState();
+
+    // 调用后端取消 API
+    if (this.currentTaskId) {
+      try {
+        await fetch('/api/agent/cancel', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ taskId: this.currentTaskId }),
+        });
+        console.log('Task cancel request sent:', this.currentTaskId);
+      } catch (e) {
+        console.error('Failed to cancel task:', e);
+      }
+    }
+
+    // 清理前端状态
     store.clearCurrentTask();
+    this.currentTaskId = null;
     this.stop();
   }
 }

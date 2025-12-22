@@ -9,7 +9,7 @@
  */
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import JMuxer from 'jmuxer';
-import { Card, Spin, Space, Button, Typography } from 'antd';
+import { Spin, Space, Button, Typography } from 'antd';
 import {
   ReloadOutlined,
   MobileOutlined,
@@ -381,74 +381,35 @@ export const ScrcpyPlayer: React.FC = () => {
   };
 
   return (
-    <Card
-      title={
-        <Space>
-          <MobileOutlined />
-          设备投屏
-          {resolution && (
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              {resolution.width}x{resolution.height}
-            </Text>
-          )}
-        </Space>
-      }
-      extra={
-        status === 'connected' && (
-          <Space>
-            <Button size="small" onClick={resetStream} icon={<ReloadOutlined />}>
-              重置
-            </Button>
-            <Button
-              size="small"
-              danger
-              onClick={disconnect}
-              icon={<DisconnectOutlined />}
-            >
-              断开
-            </Button>
-          </Space>
-        )
-      }
-      style={{ height: '100%' }}
-      bodyStyle={{
-        height: 'calc(100% - 56px)',
-        padding: 8,
+    <div
+      ref={containerRef}
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
+        background: '#000',
+        borderRadius: 8,
+        overflow: 'hidden',
       }}
     >
-      <div
-        ref={containerRef}
+      <video
+        ref={videoRef}
+        autoPlay
+        muted
+        playsInline
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
         style={{
-          position: 'relative',
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          background: '#000',
-          borderRadius: 8,
-          overflow: 'hidden',
+          maxWidth: '100%',
+          maxHeight: '100%',
+          objectFit: 'contain',
+          cursor: status === 'connected' ? 'pointer' : 'default',
         }}
-      >
-        <video
-          ref={videoRef}
-          autoPlay
-          muted
-          playsInline
-          onPointerDown={handlePointerDown}
-          onPointerUp={handlePointerUp}
-          style={{
-            maxWidth: '100%',
-            maxHeight: '100%',
-            objectFit: 'contain',
-            cursor: status === 'connected' ? 'pointer' : 'default',
-          }}
-        />
-        {renderOverlay()}
-      </div>
-    </Card>
+      />
+      {renderOverlay()}
+    </div>
   );
 };

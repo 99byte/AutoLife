@@ -5,6 +5,7 @@ Agent 路由
 import os
 import json
 import asyncio
+from typing import Dict, Set
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -18,6 +19,26 @@ router = APIRouter(prefix="/api/agent", tags=["agent"])
 # 是否启用模拟模式（用于测试）
 MOCK_MODE = os.getenv("AUTOLIFE_MOCK_MODE", "false").lower() == "true"
 
+# 任务取消管理
+_cancelled_tasks: Set[str] = set()  # 已取消的任务ID集合
+_current_task_id: str | None = None  # 当前正在执行的任务ID
+
+
+def is_task_cancelled(task_id: str) -> bool:
+    """检查任务是否已被取消"""
+    return task_id in _cancelled_tasks
+
+
+def cancel_task(task_id: str) -> bool:
+    """取消指定任务"""
+    _cancelled_tasks.add(task_id)
+    return True
+
+
+def clear_cancelled_task(task_id: str):
+    """清理已取消的任务记录"""
+    _cancelled_tasks.discard(task_id)
+
 
 class RunRequest(BaseModel):
     task: str
@@ -25,6 +46,29 @@ class RunRequest(BaseModel):
 
 class RunResult(BaseModel):
     result: str
+
+
+class CancelRequest(BaseModel):
+    taskId: str
+
+
+@router.post("/cancel", response_model=ApiResponse)
+async def cancel_running_task(request: CancelRequest):
+    """
+    取消正在执行的任务
+    """
+    global _current_task_id
+
+    task_id = request.taskId
+
+    # 标记任务为已取消
+    cancel_task(task_id)
+
+    # 如果是当前任务，也标记
+    if _current_task_id == task_id:
+        _current_task_id = None
+
+    return ApiResponse(success=True, data={"message": f"任务 {task_id} 已标记为取消"})
 
 
 @router.post("/run", response_model=ApiResponse[RunResult])
@@ -54,11 +98,24 @@ async def stream_task(
     """
     流式执行任务
     """
+    global _current_task_id
+
     async def event_generator():
+        global _current_task_id
+
+        # 设置当前任务ID
+        _current_task_id = taskId
+
         # 发送任务开始事件
         yield f"event: task_start\ndata: {json.dumps({'taskId': taskId})}\n\n"
 
         try:
+            # 检查任务是否在开始前就被取消了
+            if is_task_cancelled(taskId):
+                yield f"event: task_cancelled\ndata: {json.dumps({'taskId': taskId, 'message': '任务已取消'})}\n\n"
+                clear_cancelled_task(taskId)
+                return
+
             if MOCK_MODE:
                 # 模拟模式：返回模拟响应
                 await asyncio.sleep(1)  # 模拟处理延迟
@@ -112,6 +169,13 @@ async def stream_task(
 
                 yield f"event: step_complete\ndata: {json.dumps({'taskId': taskId, 'stepNumber': step_number, 'result': result.message or '步骤完成'})}\n\n"
 
+                # 检查任务是否被取消
+                if is_task_cancelled(taskId):
+                    yield f"event: task_cancelled\ndata: {json.dumps({'taskId': taskId, 'message': '任务已取消'})}\n\n"
+                    clear_cancelled_task(taskId)
+                    _current_task_id = None
+                    return
+
                 # 检查是否已完成
                 if result.finished:
                     final_message = result.message or "任务完成"
@@ -119,6 +183,13 @@ async def stream_task(
                     # 后续步骤循环
                     max_steps = 100
                     while not result.finished and agent.phone_agent.step_count < max_steps:
+                        # 检查任务是否被取消
+                        if is_task_cancelled(taskId):
+                            yield f"event: task_cancelled\ndata: {json.dumps({'taskId': taskId, 'message': '任务已取消'})}\n\n"
+                            clear_cancelled_task(taskId)
+                            _current_task_id = None
+                            return
+
                         step_number += 1
 
                         # 先发送步骤开始事件
@@ -147,7 +218,7 @@ async def stream_task(
                             final_message = result.message or "任务完成"
                             break
 
-                    if not result.finished:
+                    if not result.finished and not is_task_cancelled(taskId):
                         final_message = "已达到最大步数限制"
 
                 # 发送任务完成事件

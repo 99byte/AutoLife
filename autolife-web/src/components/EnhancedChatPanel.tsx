@@ -460,7 +460,6 @@ export const EnhancedChatPanel: React.FC = () => {
         onSubmit={() => handleSendText()}
         loading={isTaskRunning}
         onCancel={handleCancelTask}
-        disabled={isTaskRunning}
       />
     </Card>
   );

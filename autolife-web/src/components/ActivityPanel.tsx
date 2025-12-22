@@ -2,15 +2,21 @@
  * 活动面板主容器
  */
 import React, { useState } from 'react';
-import { Card, Tabs, Badge, Button } from 'antd';
+import { Card, Tabs, Badge, Button, Space } from 'antd';
 import { ClockCircleOutlined, CheckSquareOutlined, MobileOutlined } from '@ant-design/icons';
 import { ActivityTimeline } from './ActivityTimeline.js';
 import { TodoList } from './TodoList.js';
-import { ScrcpyPlayer } from './ScrcpyPlayer.js';
 import { useAppStore } from '../store/appStore.js';
 
 export const ActivityPanel: React.FC = () => {
-  const { getTodayActivities, getTodosByStatus, chatPanelVisible, setChatPanelVisible } = useAppStore();
+  const {
+    getTodayActivities,
+    getTodosByStatus,
+    chatPanelVisible,
+    setChatPanelVisible,
+    scrcpyPanelVisible,
+    setScrcpyPanelVisible,
+  } = useAppStore();
   const [activeTab, setActiveTab] = useState('activities');
 
   // 获取今日活动数量
@@ -51,20 +57,6 @@ export const ActivityPanel: React.FC = () => {
         </div>
       ),
     },
-    {
-      key: 'scrcpy',
-      label: (
-        <span>
-          <MobileOutlined />
-          <span style={{ marginLeft: 8 }}>设备投屏</span>
-        </span>
-      ),
-      children: (
-        <div style={{ height: 'calc(100vh - 180px)', overflow: 'hidden' }}>
-          <ScrcpyPlayer />
-        </div>
-      ),
-    },
   ];
 
   return (
@@ -73,22 +65,38 @@ export const ActivityPanel: React.FC = () => {
       styles={{ body: { flex: 1, overflow: 'hidden', padding: '16px' } }}
       title="Automated Your Life"
       extra={
-        !chatPanelVisible && (
-          <Button
-            type="primary"
-            onClick={() => setChatPanelVisible(true)}
-            style={{
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              border: 'none',
-              borderRadius: 20,
-              paddingLeft: 16,
-              paddingRight: 16,
-            }}
-          >
-            <span style={{ marginRight: 4 }}>✨</span>
-            AI Copilot
-          </Button>
-        )
+        <Space>
+          {!scrcpyPanelVisible && (
+            <Button
+              type="default"
+              onClick={() => setScrcpyPanelVisible(true)}
+              style={{
+                borderRadius: 20,
+                paddingLeft: 16,
+                paddingRight: 16,
+              }}
+            >
+              <MobileOutlined style={{ marginRight: 4 }} />
+              投屏
+            </Button>
+          )}
+          {!chatPanelVisible && (
+            <Button
+              type="primary"
+              onClick={() => setChatPanelVisible(true)}
+              style={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                border: 'none',
+                borderRadius: 20,
+                paddingLeft: 16,
+                paddingRight: 16,
+              }}
+            >
+              <span style={{ marginRight: 4 }}>✨</span>
+              AI Copilot
+            </Button>
+          )}
+        </Space>
       }
     >
       <Tabs
