@@ -3,9 +3,10 @@
  */
 import React, { useState } from 'react';
 import { Card, Tabs, Badge, Button } from 'antd';
-import { ClockCircleOutlined, CheckSquareOutlined } from '@ant-design/icons';
+import { ClockCircleOutlined, CheckSquareOutlined, MobileOutlined } from '@ant-design/icons';
 import { ActivityTimeline } from './ActivityTimeline.js';
 import { TodoList } from './TodoList.js';
+import { ScrcpyPlayer } from './ScrcpyPlayer.js';
 import { useAppStore } from '../store/appStore.js';
 
 export const ActivityPanel: React.FC = () => {
@@ -47,6 +48,20 @@ export const ActivityPanel: React.FC = () => {
       children: (
         <div style={{ height: 'calc(100vh - 180px)', overflowY: 'auto' }}>
           <TodoList />
+        </div>
+      ),
+    },
+    {
+      key: 'scrcpy',
+      label: (
+        <span>
+          <MobileOutlined />
+          <span style={{ marginLeft: 8 }}>设备投屏</span>
+        </span>
+      ),
+      children: (
+        <div style={{ height: 'calc(100vh - 180px)', overflow: 'hidden' }}>
+          <ScrcpyPlayer />
         </div>
       ),
     },
