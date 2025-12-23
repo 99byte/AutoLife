@@ -1,69 +1,47 @@
 /**
- * 活动面板主容器
+ * 饮食看板主容器
  */
-import React, { useState } from 'react';
-import { Card, Tabs, Badge, Button, Space } from 'antd';
-import { ClockCircleOutlined, CheckSquareOutlined, MobileOutlined } from '@ant-design/icons';
-import { ActivityTimeline } from './ActivityTimeline.js';
-import { TodoList } from './TodoList.js';
+import React from 'react';
+import { Card, Button, Space } from 'antd';
+import { MobileOutlined } from '@ant-design/icons';
 import { useAppStore } from '../store/appStore.js';
+import { NutritionOverview, MealCard, RecommendationCard } from './DietComponents.js';
+import type { Meal, DailyNutrition } from './DietComponents.js';
 
 export const ActivityPanel: React.FC = () => {
   const {
-    getTodayActivities,
-    getTodosByStatus,
-    chatPanelVisible,
-    setChatPanelVisible,
     scrcpyPanelVisible,
     setScrcpyPanelVisible,
+    chatPanelVisible,
+    setChatPanelVisible,
   } = useAppStore();
-  const [activeTab, setActiveTab] = useState('activities');
 
-  // 获取今日活动数量
-  const todayActivities = getTodayActivities();
-  const activityCount = todayActivities.length;
+  // Mock Data
+  const dailyNutrition: DailyNutrition = {
+    protein: { current: 95, total: 120, color: '#a855f7' }, // Purple
+    carbs: { current: 147, total: 200, color: '#f59e0b' }, // Orange
+    fats: { current: 38, total: 60, color: '#3b82f6' }, // Blue
+  };
 
-  // 获取未完成的待办事项数量
-  const pendingTodos = getTodosByStatus('pending').length + getTodosByStatus('in_progress').length;
-
-  const items = [
+  const meals: Meal[] = [
     {
-      key: 'activities',
-      label: (
-        <span>
-          <ClockCircleOutlined />
-          <span style={{ marginLeft: 8 }}>今日活动</span>
-          <Badge count={activityCount} style={{ marginLeft: 8 }} showZero />
-        </span>
-      ),
-      children: (
-        <div style={{ height: 'calc(100vh - 180px)', overflowY: 'auto' }}>
-          <ActivityTimeline />
-        </div>
-      ),
-    },
-    {
-      key: 'todos',
-      label: (
-        <span>
-          <CheckSquareOutlined />
-          <span style={{ marginLeft: 8 }}>待办事项</span>
-          <Badge count={pendingTodos} style={{ marginLeft: 8 }} showZero />
-        </span>
-      ),
-      children: (
-        <div style={{ height: 'calc(100vh - 180px)', overflowY: 'auto' }}>
-          <TodoList />
-        </div>
-      ),
-    },
+      id: '1',
+      name: '希腊酸奶水果杯',
+      time: '08:30',
+      calories: 220,
+      protein: 12,
+      carbs: 35,
+      fats: 5,
+      restaurant: '轻食小站',
+      status: 'completed',
+    }
   ];
 
   return (
     <Card
       style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
-      styles={{ body: { flex: 1, overflow: 'hidden', padding: '16px' } }}
-      title="Automated Your Life"
+      styles={{ body: { flex: 1, overflowY: 'auto', padding: '16px', background: '#f5f7fa' } }}
+      title="健康饮食管家"
       extra={
         <Space>
           {!scrcpyPanelVisible && (
@@ -99,12 +77,15 @@ export const ActivityPanel: React.FC = () => {
         </Space>
       }
     >
-      <Tabs
-        activeKey={activeTab}
-        onChange={setActiveTab}
-        items={items}
-        type="card"
-      />
+      <div style={{ maxWidth: 800, margin: '0 auto' }}>
+        <NutritionOverview nutrition={dailyNutrition} />
+
+        {meals.map(meal => (
+          <MealCard key={meal.id} meal={meal} />
+        ))}
+
+        <RecommendationCard />
+      </div>
     </Card>
   );
 };
