@@ -1,12 +1,33 @@
 /**
- * 饮食看板主容器
+ * 核心活动面板
+ * 展示 Markdown 文档说明
  */
 import React from 'react';
 import { Card, Button, Space } from 'antd';
 import { MobileOutlined } from '@ant-design/icons';
 import { useAppStore } from '../store/appStore.js';
-import { NutritionOverview, MealCard, RecommendationCard } from './DietComponents.js';
-import type { Meal, DailyNutrition } from './DietComponents.js';
+import { XMarkdown } from '@ant-design/x-markdown';
+
+const markdownContent = `
+# AutoLife Project
+
+## 简介
+AutoLife 是一个基于 AI Agent 的智能生活辅助系统，旨在通过自动化技术提升用户的日常生活体验。
+
+## 核心功能
+*   **📱 设备投屏**: 集成 Scrcpy，实时控制安卓设备。
+*   **🤖 AI Copilot**: 智能对话助手，支持自然语言指令。
+*   **⚡️ 自动化任务**: 自动执行跨应用操作。
+
+## 快速开始
+1.  点击右侧 "AI Copilot" 唤起助手。
+2.  输入指令，例如 "打开微信"。
+3.  观察左侧投屏设备的响应。
+
+## 最新更新
+*   [New] 集成 Ant Design X 组件库。
+*   [Fix] 优化了三栏布局的响应式体验。
+`;
 
 export const ActivityPanel: React.FC = () => {
   const {
@@ -16,32 +37,11 @@ export const ActivityPanel: React.FC = () => {
     setChatPanelVisible,
   } = useAppStore();
 
-  // Mock Data
-  const dailyNutrition: DailyNutrition = {
-    protein: { current: 95, total: 120, color: '#a855f7' }, // Purple
-    carbs: { current: 147, total: 200, color: '#f59e0b' }, // Orange
-    fats: { current: 38, total: 60, color: '#3b82f6' }, // Blue
-  };
-
-  const meals: Meal[] = [
-    {
-      id: '1',
-      name: '希腊酸奶水果杯',
-      time: '08:30',
-      calories: 220,
-      protein: 12,
-      carbs: 35,
-      fats: 5,
-      restaurant: '轻食小站',
-      status: 'completed',
-    }
-  ];
-
   return (
     <Card
       style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
-      styles={{ body: { flex: 1, overflowY: 'auto', padding: '16px', background: '#f5f7fa' } }}
-      title="健康饮食管家"
+      styles={{ body: { flex: 1, overflowY: 'auto', padding: '16px' } }}
+      title="项目说明"
       extra={
         <Space>
           {!scrcpyPanelVisible && (
@@ -77,15 +77,7 @@ export const ActivityPanel: React.FC = () => {
         </Space>
       }
     >
-      <div style={{ maxWidth: 800, margin: '0 auto' }}>
-        <NutritionOverview nutrition={dailyNutrition} />
-
-        {meals.map(meal => (
-          <MealCard key={meal.id} meal={meal} />
-        ))}
-
-        <RecommendationCard />
-      </div>
+      <XMarkdown>{markdownContent}</XMarkdown>
     </Card>
   );
 };
