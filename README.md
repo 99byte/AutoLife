@@ -137,16 +137,21 @@ src/autolife/               # 主源码目录
 │       ├── agent.py       # 任务执行（支持 SSE 流式）
 │       └── scrcpy.py      # 投屏 WebSocket（H.264 NAL 流）
 └── scrcpy/                # scrcpy 投屏模块
+    ├── manager.py         # ScrcpyManager 投屏管理器
     └── streamer.py        # ScrcpyStreamer H.264 流管理器
 
 autolife-web/              # React 前端应用
 ├── src/
 │   ├── components/        # React 组件
+│   │   ├── ActivityPanel.tsx        # 活动记录面板
 │   │   ├── ChatPanel.tsx            # 聊天面板
-│   │   ├── ActivityPanel.tsx        # 活动记录
-│   │   ├── TodoList.tsx             # 待办事项
 │   │   ├── ConversationHistory.tsx  # 对话历史
-│   │   └── ScrcpyPlayer.tsx         # 设备投屏播放器
+│   │   ├── ConversationPanel.tsx    # 对话面板
+│   │   ├── EnhancedChatPanel.tsx    # 增强聊天面板
+│   │   ├── QuickActions.tsx         # 快捷操作
+│   │   ├── ScrcpyPanel.tsx          # 投屏面板容器
+│   │   ├── ScrcpyPlayer.tsx         # 设备投屏播放器
+│   │   └── ThreeColumnLayout.tsx    # 三栏布局
 │   ├── services/          # API 服务调用
 │   ├── store/             # Zustand 状态管理
 │   ├── types/             # TypeScript 类型定义
@@ -180,12 +185,11 @@ Open-AutoGLM/              # AutoGLM 子模块 (git submodule)
 
 ---
 
-## 📚 ���发文档
+## 📚 开发文档
 
 - [快速开始指南](docs/quickstart.md) - 详细的安装和使用说明
 - [开发路线图](docs/ROADMAP.md) - 项目进度和计划
 - [前端开发文档](docs/frontend.md) - 前端架构和开发说明
-- [投屏功能说明](docs/scrcpy-t.md) - scrcpy H.264 NAL 集成方案
 
 ---
 
@@ -198,6 +202,7 @@ Open-AutoGLM/              # AutoGLM 子模块 (git submodule)
 ## 🙏 致谢
 
 - [Open-AutoGLM](https://github.com/zai-org/Open-AutoGLM) - 提供手机控制核心能力
+- [AutoGLM-GUI](https://github.com/suyiiyii/AutoGLM-GUI) - 投屏功能实现参考
 - [智谱 AI](https://open.bigmodel.cn/) - 提供 GLM 大模型支持
 - [scrcpy](https://github.com/Genymobile/scrcpy) - Android 屏幕投射工具
 
