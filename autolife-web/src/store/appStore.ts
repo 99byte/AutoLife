@@ -76,7 +76,7 @@ interface AppStore {
   startTask: (taskId: string, taskDescription: string) => void;
   addStep: (step: ExecutionStep) => void;
   updateStep: (stepNumber: number, updates: Partial<ExecutionStep>) => void;
-  completeTask: (finalMessage?: string) => void;
+  completeTask: (finalMessage?: string, taskReport?: string) => void;
   failTask: (errorMessage: string) => void;
   connectSSE: (eventSource: EventSource) => void;
   disconnectSSE: () => void;
@@ -316,7 +316,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
         : null,
     })),
 
-  completeTask: (finalMessage) =>
+  completeTask: (finalMessage, taskReport) =>
     set((state) => {
       const completed = state.currentTask
         ? {
@@ -324,6 +324,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
             status: 'completed' as TaskStatus,
             endTime: Date.now(),
             finalMessage,
+            taskReport,
           }
         : null;
 

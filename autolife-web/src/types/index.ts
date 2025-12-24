@@ -100,6 +100,7 @@ export interface TaskExecution {
   endTime?: number;                                // 结束时间
   errorMessage?: string;                           // 错误信息（失败时）
   finalMessage?: string;                           // 最终消息（完成时）
+  taskReport?: string;                             // 任务成果报告（Markdown 格式）
 }
 
 // SSE 事件类型
@@ -109,6 +110,7 @@ export type SSEEventType =
   | 'thinking'        // 思考过程
   | 'action'          // 执行动作
   | 'step_complete'   // 步骤完成
+  | 'task_result'     // 任务成果报告
   | 'task_complete'   // 任务完成
   | 'error';          // 错误
 

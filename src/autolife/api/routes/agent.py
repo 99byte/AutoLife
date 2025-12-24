@@ -147,18 +147,15 @@ async def stream_task(
                 # 第一步（带任务描述）
                 step_number = 1
 
-                # 先发送步骤开始事件
+                # 立即发送步骤开始事件（不带 action，让前端立即显示"处理中..."）
                 yield f"event: step_start\ndata: {json.dumps({'taskId': taskId, 'stepNumber': step_number})}\n\n"
 
-                # 执行步骤
+                # 执行步骤（获取 AI 决策和执行结果）
                 result = await loop.run_in_executor(
                     None, agent.phone_agent.step, text
                 )
 
-                # 发送步骤结果事件
-                if result.thinking:
-                    yield f"event: thinking\ndata: {json.dumps({'taskId': taskId, 'stepNumber': step_number, 'thinking': result.thinking})}\n\n"
-
+                # 构建 action 数据并发送
                 if result.action:
                     action_data = {
                         'action': result.action.get('action', 'Unknown'),
@@ -167,6 +164,11 @@ async def stream_task(
                     }
                     yield f"event: action\ndata: {json.dumps({'taskId': taskId, 'stepNumber': step_number, 'action': action_data})}\n\n"
 
+                # 发送思考过程
+                if result.thinking:
+                    yield f"event: thinking\ndata: {json.dumps({'taskId': taskId, 'stepNumber': step_number, 'thinking': result.thinking})}\n\n"
+
+                # 发送步骤完成
                 yield f"event: step_complete\ndata: {json.dumps({'taskId': taskId, 'stepNumber': step_number, 'result': result.message or '步骤完成'})}\n\n"
 
                 # 检查任务是否被取消
@@ -176,9 +178,17 @@ async def stream_task(
                     _current_task_id = None
                     return
 
+                # Collect steps for report generation
+                steps_summary_list = []
+                if result.thinking:
+                    steps_summary_list.append(f"Step {step_number} Thinking: {result.thinking}")
+                if result.action:
+                    steps_summary_list.append(f"Step {step_number} Action: {result.action.get('message', str(result.action))}")
+
                 # 检查是否已完成
                 if result.finished:
                     final_message = result.message or "任务完成"
+                    # 任务在第一步就完成，也需要生成报告
                 else:
                     # 后续步骤循环
                     max_steps = 100
@@ -192,18 +202,15 @@ async def stream_task(
 
                         step_number += 1
 
-                        # 先发送步骤开始事件
+                        # 立即发送步骤开始事件（不带 action，让前端立即显示"处理中..."）
                         yield f"event: step_start\ndata: {json.dumps({'taskId': taskId, 'stepNumber': step_number})}\n\n"
 
-                        # 执行步骤
+                        # 执行步骤（获取 AI 决策和执行结果）
                         result = await loop.run_in_executor(
                             None, agent.phone_agent.step, None
                         )
 
-                        # 发送步骤结果事件
-                        if result.thinking:
-                            yield f"event: thinking\ndata: {json.dumps({'taskId': taskId, 'stepNumber': step_number, 'thinking': result.thinking})}\n\n"
-
+                        # 构建 action 数据并发送
                         if result.action:
                             action_data = {
                                 'action': result.action.get('action', 'Unknown'),
@@ -212,7 +219,18 @@ async def stream_task(
                             }
                             yield f"event: action\ndata: {json.dumps({'taskId': taskId, 'stepNumber': step_number, 'action': action_data})}\n\n"
 
+                        # 发送思考过程
+                        if result.thinking:
+                            yield f"event: thinking\ndata: {json.dumps({'taskId': taskId, 'stepNumber': step_number, 'thinking': result.thinking})}\n\n"
+
+                        # 发送步骤完成
                         yield f"event: step_complete\ndata: {json.dumps({'taskId': taskId, 'stepNumber': step_number, 'result': result.message or '步骤完成'})}\n\n"
+
+                        # Collect step info for report (包含 thinking 和 action)
+                        if result.thinking:
+                            steps_summary_list.append(f"Step {step_number} Thinking: {result.thinking}")
+                        if result.action:
+                            steps_summary_list.append(f"Step {step_number} Action: {result.action.get('message', str(result.action))}")
 
                         if result.finished:
                             final_message = result.message or "任务完成"
@@ -220,6 +238,21 @@ async def stream_task(
 
                     if not result.finished and not is_task_cancelled(taskId):
                         final_message = "已达到最大步数限制"
+
+                # Generate task report (无论是第一步完成还是多步完成)
+                try:
+                    # 添加最终结果消息到摘要
+                    if final_message:
+                        steps_summary_list.append(f"Final Result: {final_message}")
+
+                    steps_summary = "\n".join(steps_summary_list)  # 传递完整摘要
+                    report = await loop.run_in_executor(
+                        None, agent.generate_task_report, text, steps_summary
+                    )
+                    yield f"event: task_result\ndata: {json.dumps({'taskId': taskId, 'report': report}, ensure_ascii=False)}\n\n"
+                except Exception as e:
+                    print(f"Failed to generate task report: {e}")
+                    # Don't fail the task if report generation fails
 
                 # 发送任务完成事件
                 yield f"event: task_complete\ndata: {json.dumps({'taskId': taskId, 'message': final_message})}\n\n"

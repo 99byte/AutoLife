@@ -21,7 +21,39 @@ import { ConversationHistory } from './ConversationHistory.js';
 import { useAppStore } from '../store/appStore.js';
 import { apiService } from '../services/api.js';
 import { sseService } from '../services/sse.js';
-import type { ExecutionStep } from '../types/index.js';
+import type { ExecutionStep, ActionDetail } from '../types/index.js';
+
+// 生成简短的动作标题
+const getShortActionTitle = (action: ActionDetail | undefined): string => {
+  if (!action) return '处理中...';
+
+  switch (action.action) {
+    case 'Launch':
+      return `启动 ${action.app || '应用'}`;
+    case 'Tap':
+      return '点击元素';
+    case 'Type': {
+      const text = action.text || '';
+      return `输入「${text.slice(0, 8)}${text.length > 8 ? '...' : ''}」`;
+    }
+    case 'Swipe':
+      return action.direction === 'up' ? '上滑' : action.direction === 'down' ? '下滑' : '滑动';
+    case 'Back':
+      return '返回';
+    case 'Home':
+      return '回到主屏';
+    case 'Wait':
+      return '等待';
+    case 'LongPress':
+      return '长按';
+    case 'DoubleTap':
+      return '双击';
+    case 'Scroll':
+      return '滚动';
+    default:
+      return action.action;
+  }
+};
 
 // 将步骤转换为 ThoughtChain items 的辅助函数
 const stepsToThoughtChainItems = (steps: ExecutionStep[]): ThoughtChainItemType[] => {
@@ -37,19 +69,13 @@ const stepsToThoughtChainItems = (steps: ExecutionStep[]): ThoughtChainItemType[
       icon = <CloseCircleOutlined style={{ color: '#ff4d4f' }} />;
     }
 
-    let actionText = '';
-    if (step.action) {
-      const actionDesc = step.action.description || '';
-      actionText = actionDesc || `${step.action.action}`;
-    }
-
     return {
       key: `step-${step.stepNumber}`,
       icon,
-      title: `步骤 ${step.stepNumber}: ${actionText || '处理中...'}`,
+      title: `步骤 ${step.stepNumber}: ${getShortActionTitle(step.action)}`,
       description: step.thinking
-        ? step.thinking.length > 150
-          ? step.thinking.substring(0, 150) + '...'
+        ? step.thinking.length > 80
+          ? step.thinking.substring(0, 80) + '...'
           : step.thinking
         : undefined,
       status,
@@ -293,21 +319,13 @@ export const EnhancedChatPanel: React.FC = () => {
         icon = <CloseCircleOutlined style={{ color: '#ff4d4f' }} />;
       }
 
-      // 构建动作描述
-      let actionText = '';
-      if (step.action) {
-        const actionType = step.action.action || 'Unknown';
-        const actionDesc = step.action.description || '';
-        actionText = actionDesc || `${actionType}`;
-      }
-
       return {
         key: `step-${step.stepNumber}`,
         icon,
-        title: `步骤 ${step.stepNumber}: ${actionText || '处理中...'}`,
+        title: `步骤 ${step.stepNumber}: ${getShortActionTitle(step.action)}`,
         description: step.thinking
-          ? step.thinking.length > 150
-            ? step.thinking.substring(0, 150) + '...'
+          ? step.thinking.length > 80
+            ? step.thinking.substring(0, 80) + '...'
             : step.thinking
           : undefined,
         status,

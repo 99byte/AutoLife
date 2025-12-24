@@ -10,6 +10,7 @@ export class SSEService {
   private eventSource: EventSource | null = null;
   private errorHandled: boolean = false;  // 防止重复处理错误
   private currentTaskId: string | null = null;  // 当前任务ID
+  private pendingTaskReport: string | null = null;  // 待处理的任务报告
 
   /**
    * 启动 SSE 连接
@@ -30,6 +31,7 @@ export class SSEService {
     // 初始化任务
     store.startTask(_taskId, text);
     this.errorHandled = false;  // 重置错误处理标志
+    this.pendingTaskReport = null;  // 重置任务报告
 
     // 建立 SSE 连接
     const url = `/api/agent/stream?taskId=${_taskId}&text=${encodeURIComponent(text)}`;
@@ -52,14 +54,29 @@ export class SSEService {
       console.log('SSE: Task started', JSON.parse(e.data));
     });
 
-    // 2. 步骤开始
+    // 2. 步骤开始（包含 action 信息，让前端立即显示动作标题）
     this.eventSource.addEventListener('step_start', (e) => {
       console.log('SSE: Step started', e.data);
       const data = JSON.parse(e.data);
+
+      // 构建 action 对象（如果有）
+      let action: ActionDetail | undefined;
+      if (data.action) {
+        action = {
+          action: data.action.action,
+          target: data.action.target,
+          text: data.action.text,
+          direction: data.action.direction,
+          app: data.action.app,
+          description: data.action.description,
+        };
+      }
+
       const step: ExecutionStep = {
         stepNumber: data.stepNumber,
         status: 'running',
         timestamp: Date.now(),
+        action,  // 包含 action，让标题立即显示
       };
       store.addStep(step);
     });
@@ -115,13 +132,26 @@ export class SSEService {
       this.stop();
     });
 
+    // 6.5. 任务成果报告（新增）
+    this.eventSource.addEventListener('task_result', (e) => {
+      console.log('SSE: Task result', e.data);
+      const data = JSON.parse(e.data);
+      // 暂存报告，等待 task_complete 事件
+      this.pendingTaskReport = data.report || null;
+    });
+
     // 7. 任务完成
     this.eventSource.addEventListener('task_complete', (e) => {
       console.log('SSE: Task complete', e.data);
       const data = JSON.parse(e.data);
       // 后端发送 result 字段，兼容 message 字段
       const message = data.message || data.result || '任务已完成';
-      store.completeTask(message);
+
+      // 获取暂存的报告
+      const taskReport = this.pendingTaskReport;
+      this.pendingTaskReport = null;
+
+      store.completeTask(message, taskReport || undefined);
 
       // 添加 AI 回复消息（包含思维链）
       const currentTask = store.currentTask;
